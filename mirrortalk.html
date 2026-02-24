@@ -27,8 +27,7 @@ html, body {
 }
 #app {
   position: fixed;
-  top: env(safe-area-inset-top, 0px);
-  left: 0; right: 0;
+  top: env(safe-area-inset-top, 0px); left: 0; right: 0;
   bottom: env(safe-area-inset-bottom, 0px);
   display: flex; flex-direction: column;
   background:
@@ -175,215 +174,251 @@ html, body {
 <script>
 'use strict';
 /*
-  ═══════════════════════════════════════════════════════════════
-  SOLUZIONE iOS TTS (fonte: talkrapp.com/speechSynthesis.html)
+  ═══════════════════════════════════════════════════════
+  Soluzione definitiva iOS Safari TTS (2024):
 
-  "SpeechRecognition events count as a user-initiated event"
+  PROBLEMA RADICALE: iOS Safari richiede che speak() sia
+  chiamato NELLO STESSO STACK SINCRONO di un click/touch.
+  Qualsiasi await, Promise.then, o setTimeout lo blocca.
 
-  Quindi speak() va chiamato DENTRO rec.onend / rec.onresult,
-  NON dopo un await asincrono.
+  SOLUZIONE ADOTTATA:
+  1. Click sul bottone → speak() chiamato SUBITO (sincrono)
+     con l'utterance già pronta (testo dell'ultima traduzione)
+  2. Mentre si parla → avvio il microfono in parallelo
+  3. Alla fine del microfono → traduco e salvo il risultato
+  4. Click successivo → riparte dal punto 1
 
-  STRATEGIA:
-  1. rec.onend scatta → iOS lo considera evento utente valido
-  2. Dentro onend: chiamo speak() SUBITO con il testo ancora
-     da tradurre (o già tradotto se era veloce)
-  3. Lancio la traduzione in parallelo in onresult (appena
-     arriva il testo finale) così è già pronta quando serve
+  In pratica: ogni click fa DUE cose in sequenza sincrona:
+    A) Parla la traduzione precedente (se c'è)
+    B) Avvia la registrazione per la prossima
 
-  NOTA IMPORTANTE: assicurarsi che il telefono NON sia in
-  modalità silenziosa (interruttore fisico laterale su iPhone)!
-  ═══════════════════════════════════════════════════════════════
+  ⚠️  REQUISITI iOS:
+  - Togliere il silenziatore fisico (interruttore laterale)
+  - Volume alzato
+  - Safari (non Chrome su iOS, che non supporta STT)
+  ═══════════════════════════════════════════════════════
 */
 
 const BCP = {it:'it-IT',en:'en-US',es:'es-ES',fr:'fr-FR',de:'de-DE',pt:'pt-PT',ru:'ru-RU',zh:'zh-CN',ar:'ar-SA',bg:'bg-BG',cs:'cs-CZ'};
 const LBL = {it:'Parla',en:'Speak',es:'Hablar',fr:'Parler',de:'Sprechen',pt:'Falar',ru:'Говорить',zh:'说话',ar:'تكلم',bg:'Говори',cs:'Mluvit'};
 
-const $  = id => document.getElementById(id);
-const ga = () => $('la').value;
-const gb = () => $('lb').value;
-const gl = s  => s === 'a' ? ga() : gb();
+const $ = id => document.getElementById(id);
+const gl = s => $(s==='a'?'la':'lb').value;
 
 function onLC(s) { $('nl'+(s==='a'?'a':'b')).textContent = LBL[gl(s)]||'Speak'; }
 
 let toastT;
-function toast(m, ms=2600){ const e=$('toast'); e.textContent=m; e.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>e.classList.remove('show'),ms); }
-
-// ── Voci ────────────────────────────────────────────────────
-// Su iOS getVoices() ritorna lista solo dopo onvoiceschanged
-let _voices = [];
-function loadVoices(){
-  if(!window.speechSynthesis) return;
-  const v = speechSynthesis.getVoices();
-  if(v.length){ _voices = v; return; }
-  speechSynthesis.onvoiceschanged = () => { _voices = speechSynthesis.getVoices(); };
-}
-function getVoice(lang){
-  const bcp = BCP[lang]||'en-US';
-  const px  = bcp.slice(0,2);
-  return _voices.find(v=>v.lang===bcp)
-      || _voices.find(v=>v.lang.startsWith(px)&&v.localService)
-      || _voices.find(v=>v.lang.startsWith(px))
-      || null;
+function toast(m, ms=3000) {
+  const e=$('toast'); e.textContent=m; e.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>e.classList.remove('show'),ms);
 }
 
-// ── SPEAK ────────────────────────────────────────────────────
-// DEVE essere chiamato dentro un evento STT o click diretto
-function speakNow(text, lang, btnId){
-  if(!window.speechSynthesis || !text) return;
+// ══════════════════════════════════════════════════════
+// STATO — una traduzione salvata per ogni lato
+// pending[side] = { text, lang } — da leggere al prossimo click
+// ══════════════════════════════════════════════════════
+const pending = { a: null, b: null };
+
+// ══════════════════════════════════════════════════════
+// SPEAK — chiamato SOLO in contesto sincrono di click
+// Non usare mai dopo await o setTimeout!
+// ══════════════════════════════════════════════════════
+function speakSync(text, langCode, btnId) {
+  if (!window.speechSynthesis || !text) return;
   speechSynthesis.cancel();
-  const u    = new SpeechSynthesisUtterance(text);
-  u.lang     = BCP[lang]||'en-US';
-  u.rate     = 0.88; u.pitch = 1;
-  u.voice    = getVoice(lang);
-  const btn  = $(btnId);
-  if(btn) btn.classList.add('tts');
-  const done = () => { if(btn) btn.classList.remove('tts'); };
-  u.onend = done; u.onerror = done;
-  // Fix iOS pausa spontanea
-  const fix = setInterval(()=>{ if(!speechSynthesis.speaking){clearInterval(fix);return;} if(speechSynthesis.paused) speechSynthesis.resume(); },300);
-  u.onend = ()=>{ clearInterval(fix); done(); };
-  u.onerror = ()=>{ clearInterval(fix); done(); };
+
+  const u = new SpeechSynthesisUtterance(text);
+  // Su iOS NON impostare .voice (getVoices() ritorna [])
+  // Lascia che iOS scelga la voce di sistema
+  u.lang  = BCP[langCode] || 'en-US';
+  u.rate  = 0.85;
+  u.pitch = 1;
+  u.volume = 1;
+
+  const btn = $(btnId);
+  if (btn) btn.classList.add('tts');
+  const done = () => { if (btn) btn.classList.remove('tts'); };
+  u.onend   = done;
+  u.onerror = (e) => { console.warn('TTS error:', e.error); done(); };
+
   speechSynthesis.speak(u);
 }
 
-// ── TRADUZIONE ───────────────────────────────────────────────
-async function doTranslate(text, from, to){
-  if(!text||from===to) return text;
-  try{
-    const r = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`);
+// ══════════════════════════════════════════════════════
+// TRADUZIONE
+// ══════════════════════════════════════════════════════
+async function doTranslate(text, from, to) {
+  if (!text || from === to) return text;
+  try {
+    const r = await fetch(
+      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`
+    );
     const d = await r.json();
-    if(d.responseStatus===200&&d.responseData?.translatedText){
-      const t=d.responseData.translatedText;
-      if(t&&!t.includes('MYMEMORY WARNING')&&t.toLowerCase()!==text.toLowerCase()) return t;
+    if (d.responseStatus === 200 && d.responseData?.translatedText) {
+      const t = d.responseData.translatedText;
+      if (t && !t.includes('MYMEMORY WARNING') && t.toLowerCase() !== text.toLowerCase())
+        return t;
     }
-  }catch(e){}
+  } catch(e) {}
   return text;
 }
 
-// ── STATO ────────────────────────────────────────────────────
-let rec=null, rSide=null, rTimer=null, rSec=0, rFinal='';
-let translationReady = null; // Promise della traduzione, lanciata subito
-const MAX = 12;
+// ══════════════════════════════════════════════════════
+// MICROFONO
+// ══════════════════════════════════════════════════════
+let rec = null, rSide = null, rTimer = null, rSec = 0;
+let rFinal = '', rInterim = '', silenceTimer = null;
+const MAX_SEC = 12;
+const SILENCE_MS = 1800; // ms di silenzio prima di fermarsi
 
-function tap(side){
-  if(rSide===side){ forceStop(); return; }
-  if(rSide) cancelRec();
+function tap(side) {
+  // ── STEP 1: parla SUBITO (sincrono, dentro il click) ──
+  // Se c'è una traduzione pronta per questo lato, leggila ora
+  if (pending[side]) {
+    const p = pending[side];
+    pending[side] = null;
+    speakSync(p.text, p.lang, 'b'+side); // sincrono nel click ✓
+  }
+
+  // ── STEP 2: gestisci il microfono ──
+  if (rSide === side) {
+    stopRec(side);
+    return;
+  }
+  if (rSide) abortRec();
   startRec(side);
 }
 
-function startRec(side){
-  const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){ toast('Usa Safari su iPhone o Chrome su Android'); return; }
-
-  const lang=gl(side);
-  rSide=side; rFinal=''; translationReady=null;
-
-  const btn=$('b'+side), ta=$('t'+side), tmr=$('m'+side), ring=$('r'+side);
-  const lbl=side==='a'?$('nla'):$('nlb');
-  btn.classList.add('rec');
-  lbl.textContent='⏹';
-  ta.className='txt on'; ta.textContent='🎙️ …';
-  tmr.textContent='';
-
-  rSec=MAX; const C=314;
-  ring.style.strokeDashoffset=C;
-  rTimer=setInterval(()=>{
-    rSec--; tmr.textContent=rSec+'s';
-    ring.style.strokeDashoffset=C-((MAX-rSec)/MAX)*C;
-    if(rSec<=0) forceStop();
-  },1000);
-
-  rec=new SR();
-  rec.lang=BCP[lang]||'en-US';
-  rec.interimResults=true;
-  rec.continuous=false; // auto-stop sul silenzio
-
-  const other=side==='a'?'b':'a';
-  const toLang=gl(other);
-
-  rec.onresult=e=>{
-    rFinal=''; let tmp='';
-    for(let i=0;i<e.results.length;i++){
-      if(e.results[i].isFinal) rFinal+=e.results[i][0].transcript+' ';
-      else tmp+=e.results[i][0].transcript;
-    }
-    const disp=(rFinal+tmp).trim();
-    ta.textContent=disp||'🎙️ …';
-    // Avvia traduzione NON APPENA arriva il testo finale
-    // così quando onend scatta, potrebbe essere già pronta
-    if(rFinal.trim() && !translationReady){
-      translationReady = doTranslate(rFinal.trim(), lang, toLang);
-    }
-  };
-
-  rec.onerror=e=>{
-    if(e.error==='no-speech'){ onRecEnd(side, lang, other, toLang); return; }
-    if(e.error!=='aborted') toast('❌ '+e.error);
-    cancelRec();
-  };
-
-  // ★ KEY: onend è considerato "user-initiated" da iOS Safari
-  // Possiamo chiamare speak() qui dentro!
-  rec.onend=()=>{ if(rSide===side) onRecEnd(side, lang, other, toLang); };
-
-  try{ rec.start(); }
-  catch(e){ toast('❌ Microfono non disponibile'); cancelRec(); }
-}
-
-// Chiamato dentro rec.onend — evento STT = user-initiated su iOS!
-function onRecEnd(side, lang, other, toLang){
-  const text = rFinal.trim();
-  resetUI(side);
-
-  const ta=$('t'+side);
-  if(!text){ ta.className='txt ph'; ta.textContent='…'; return; }
-  ta.className='txt'; ta.textContent=text;
-
-  const oTA=$('t'+other), oSt=$('s'+other);
-  oTA.className='txt'; oTA.textContent='…';
-  oSt.innerHTML='<div class="spin"></div>';
-
-  // Se la traduzione è già pronta (Promise resolved), usa quella.
-  // Altrimenti aspetta — ma siamo ancora nel "contesto" dell'evento STT
-  // quindi speak() funzionerà.
-  if(translationReady){
-    translationReady.then(out => {
-      oSt.innerHTML='';
-      const final=out||text;
-      oTA.className='txt say'; oTA.textContent=final;
-      // speak() dentro .then() di una Promise avviata in onend → iOS OK
-      speakNow(final, toLang, 'b'+other);
-    });
-  } else {
-    // Nessun testo riconosciuto — mostra originale
-    oSt.innerHTML='';
-    oTA.className='txt say'; oTA.textContent=text;
-    speakNow(text, toLang, 'b'+other);
+function startRec(side) {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    toast('⚠️ Usa Safari su iPhone — Chrome su iOS non supporta il microfono');
+    return;
   }
+
+  const lang = gl(side);
+  rSide = side; rFinal = ''; rInterim = '';
+
+  const btn  = $('b'+side);
+  const ta   = $('t'+side);
+  const tmr  = $('m'+side);
+  const ring = $('r'+side);
+  const lbl  = $('nl'+(side==='a'?'a':'b'));
+
+  btn.classList.add('rec');
+  lbl.textContent = '⏹';
+  ta.className = 'txt on';
+  ta.textContent = '🎙️ …';
+  tmr.textContent = '';
+
+  // Ring countdown (visivo)
+  rSec = MAX_SEC;
+  const C = 314;
+  ring.style.strokeDashoffset = C;
+  rTimer = setInterval(() => {
+    rSec--;
+    tmr.textContent = rSec + 's';
+    ring.style.strokeDashoffset = C - ((MAX_SEC - rSec) / MAX_SEC) * C;
+    if (rSec <= 0) stopRec(side);
+  }, 1000);
+
+  rec = new SR();
+  rec.lang = BCP[lang] || 'en-US';
+  rec.interimResults = true;
+  rec.continuous = true; // continuous=true per iOS (più stabile)
+  rec.maxAlternatives = 1;
+
+  rec.onresult = e => {
+    rFinal = ''; rInterim = '';
+    for (let i = 0; i < e.results.length; i++) {
+      if (e.results[i].isFinal) rFinal += e.results[i][0].transcript + ' ';
+      else rInterim += e.results[i][0].transcript;
+    }
+    ta.textContent = (rFinal + rInterim).trim() || '🎙️ …';
+
+    // Rilevamento silenzio: ogni volta che arriva audio, reset il timer
+    clearTimeout(silenceTimer);
+    if (rFinal.trim()) {
+      // Ho testo finale — aspetto SILENCE_MS di silenzio poi mi fermo
+      silenceTimer = setTimeout(() => stopRec(side), SILENCE_MS);
+    }
+  };
+
+  rec.onerror = e => {
+    clearTimeout(silenceTimer);
+    if (e.error === 'no-speech') { stopRec(side); return; }
+    if (e.error !== 'aborted') toast('❌ ' + e.error);
+    abortRec();
+  };
+
+  rec.onend = () => {
+    // Su iOS con continuous=true, onend scatta se il browser chiude
+    // Riavvia se siamo ancora in registrazione
+    if (rSide === side && rSec > 0 && !silenceTimer) {
+      try { rec.start(); } catch(e) { stopRec(side); }
+    }
+  };
+
+  try { rec.start(); }
+  catch(e) { toast('❌ Microfono non disponibile'); abortRec(); }
 }
 
-function forceStop(){
-  if(!rSide) return;
-  // Ferma la recognition — scatterà onend → onRecEnd
-  if(rec){ try{ rec.stop(); }catch(e){ onRecEnd(rSide, gl(rSide), rSide==='a'?'b':'a', gl(rSide==='a'?'b':'a')); } }
+function stopRec(side) {
+  clearTimeout(silenceTimer); silenceTimer = null;
+  const text = rFinal.trim() || rInterim.trim();
+  abortRec();
+
+  const ta = $('t'+side);
+  if (!text) { ta.className = 'txt ph'; ta.textContent = '…'; return; }
+  ta.className = 'txt';
+  ta.textContent = text;
+
+  // Calcola la lingua dell'altro lato
+  const other  = side === 'a' ? 'b' : 'a';
+  const toLang = gl(other);
+  const oTA    = $('t'+other);
+  const oSt    = $('s'+other);
+
+  oTA.className = 'txt'; oTA.textContent = '…';
+  oSt.innerHTML = '<div class="spin"></div>';
+
+  // Traduci in background e salva il risultato in pending
+  // La riproduzione avverrà al prossimo click (sincrono)
+  doTranslate(text, gl(side), toLang).then(out => {
+    oSt.innerHTML = '';
+    const final = out || text;
+    oTA.className = 'txt say';
+    oTA.textContent = final;
+
+    // Salva per il prossimo click
+    pending[other] = { text: final, lang: toLang };
+
+    // Indica visivamente che c'è audio pronto
+    $('b'+other).classList.add('tts');
+    toast('🔊 Tocca il microfono ' + (other==='a'?'🔵':'🔴') + ' per ascoltare');
+  });
 }
 
-function cancelRec(){ if(rec){try{rec.abort();}catch(e){}} resetUI(rSide); }
-
-function resetUI(side){
-  clearInterval(rTimer); rTimer=null;
-  if(rec){try{rec.abort();}catch(e){} rec=null;}
-  if(!side) return;
-  const lbl=side==='a'?$('nla'):$('nlb');
-  $('b'+side).classList.remove('rec','tts');
-  lbl.textContent=LBL[gl(side)]||'Speak';
-  $('m'+side).textContent='';
-  $('r'+side).style.strokeDashoffset='314';
+function abortRec() {
+  clearInterval(rTimer); rTimer = null;
+  clearTimeout(silenceTimer); silenceTimer = null;
+  if (rec) { try { rec.abort(); } catch(e) {} rec = null; }
+  if (!rSide) return;
+  const side = rSide; rSide = null;
+  const lbl = $('nl'+(side==='a'?'a':'b'));
+  $('b'+side).classList.remove('rec');
+  lbl.textContent = LBL[gl(side)] || 'Speak';
+  $('m'+side).textContent = '';
+  $('r'+side).style.strokeDashoffset = '314';
   $('t'+side).classList.remove('on');
-  rSide=null;
 }
 
-document.addEventListener('DOMContentLoaded',()=>{ onLC('a'); onLC('b'); loadVoices(); });
+// Init
+document.addEventListener('DOMContentLoaded', () => {
+  onLC('a'); onLC('b');
+  // Mostra avviso mute switch all'avvio
+  toast('⚠️ Verifica: interruttore laterale NON in silenzioso', 4000);
+});
 </script>
 </body>
 </html>
