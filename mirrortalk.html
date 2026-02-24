@@ -155,7 +155,7 @@ html, body {
       <button class="mic red disabled" id="bpb" onclick="tapPlay('b')">
         <div class="face">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-          <span>Ascolta</span>
+          <span id="llb">Ascolta</span>
         </div>
       </button>
     </div>
@@ -196,7 +196,7 @@ html, body {
       <button class="mic red disabled" id="bpa" onclick="tapPlay('a')">
         <div class="face">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-          <span>Ascolta</span>
+          <span id="lla">Ascolta</span>
         </div>
       </button>
     </div>
@@ -227,12 +227,17 @@ html, body {
 */
 
 const BCP = {it:'it-IT',en:'en-US',es:'es-ES',fr:'fr-FR',de:'de-DE',pt:'pt-PT',ru:'ru-RU',zh:'zh-CN',ar:'ar-SA',bg:'bg-BG',cs:'cs-CZ'};
-const LBL = {it:'Parla',en:'Speak',es:'Hablar',fr:'Parler',de:'Sprechen',pt:'Falar',ru:'Говорить',zh:'说话',ar:'تكلم',bg:'Говори',cs:'Mluvit'};
+const LBL    = {it:'Parla',   en:'Speak',  es:'Hablar', fr:'Parler',  de:'Sprechen', pt:'Falar',   ru:'Говорить', zh:'说话',  ar:'تكلم',  bg:'Говори', cs:'Mluvit'};
+const LISTEN = {it:'Ascolta', en:'Listen', es:'Escuchar',fr:'Écouter', de:'Hören',    pt:'Ouvir',   ru:'Слушать',  zh:'听',    ar:'استمع', bg:'Слушай', cs:'Poslouchat'};
 
 const $ = id => document.getElementById(id);
 const gl = s => $(s==='a'?'la':'lb').value;
 
-function onLC(s) { $('nl'+(s==='a'?'a':'b')).textContent = LBL[gl(s)]||'Speak'; }
+function onLC(s) {
+  const ab = s==='a'?'a':'b';
+  $('nl'+ab).textContent  = LBL[gl(s)]    || 'Speak';
+  $('ll'+ab).textContent  = LISTEN[gl(s)] || 'Listen';
+}
 
 let toastT;
 function toast(m, ms=3000) {
