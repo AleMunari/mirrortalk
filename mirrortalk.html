@@ -7,30 +7,35 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0a0a1a">
 <title>Traduttore</title>
+<!-- ResponsiveVoice: TTS affidabile su iOS Safari e Android -->
+<script src="https://code.responsivevoice.org/responsivevoice.js?key=FREE"></script>
 <style>
 :root{
   --bg:#0a0a1a;
   --border:rgba(255,255,255,0.13);
   --text:#f0f0ff;
-  --muted:rgba(240,240,255,0.30);
+  --muted:rgba(240,240,255,0.32);
   --blue:#4f9fff;
   --red:#ff5f7e;
   --cyan:#4ff0d0;
-  --safe-b:env(safe-area-inset-bottom,0px);
-  --safe-t:env(safe-area-inset-top,0px);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{
-  width:100%;height:100%;overflow:hidden;
+  width:100%;height:100%;
+  overflow:hidden;
   -webkit-text-size-adjust:none;
-  background:var(--bg);color:var(--text);
+  background:var(--bg);
+  color:var(--text);
   font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;
   -webkit-font-smoothing:antialiased;
 }
+
+/* Layout: usa dvh per evitare che la tastiera/statusbar tagli */
 #app{
-  position:fixed;inset:0;
-  padding-top:var(--safe-t);
-  padding-bottom:var(--safe-b);
+  position:fixed;
+  top:env(safe-area-inset-top,0px);
+  bottom:env(safe-area-inset-bottom,0px);
+  left:0;right:0;
   display:flex;flex-direction:column;
   background:
     radial-gradient(ellipse 80% 60% at 20% 10%,rgba(79,159,255,0.13) 0%,transparent 60%),
@@ -38,332 +43,315 @@ html,body{
     var(--bg);
 }
 
-/* MIRROR */
-#mirror{flex:1;display:flex;flex-direction:column;min-height:0}
-
+/* Due metà uguali */
 .half{
-  flex:1;min-height:0;
-  display:flex;flex-direction:column;
-  align-items:center;justify-content:center;
-  padding:16px 22px 14px;gap:14px;
+  flex:1;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:space-evenly;
+  padding:8px 18px;
 }
 .half.top{
   transform:rotate(180deg);
   border-bottom:1px solid var(--border);
 }
 
-/* LANG SELECT */
-.lang-sel{
-  flex-shrink:0;width:100%;max-width:290px;
-  background:rgba(255,255,255,0.08);
-  border:1px solid var(--border);border-radius:50px;
-  color:var(--text);font-size:16px;font-weight:600;
-  padding:11px 22px;text-align:center;
-  outline:none;-webkit-appearance:none;cursor:pointer;
+/* Divisore */
+.div{
+  flex:0 0 30px;
+  display:flex;align-items:center;justify-content:center;gap:18px;
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  background:rgba(255,255,255,0.015);
 }
-.lang-sel option{background:#1a1a30}
+.div svg{width:16px;height:16px;color:var(--muted);flex-shrink:0}
 
-/* TRANSCRIPT */
-.transcript{
-  width:100%;max-width:340px;
-  flex:1;min-height:54px;max-height:130px;
+/* Select lingua */
+.sel{
+  width:100%;max-width:300px;
+  background:rgba(255,255,255,0.09);
+  border:1px solid var(--border);
+  border-radius:50px;
+  color:var(--text);
+  font-size:16px;font-weight:600;
+  padding:10px 20px;
+  text-align:center;
+  outline:none;-webkit-appearance:none;
+  cursor:pointer;
+  flex-shrink:0;
+}
+.sel option{background:#1a1a30}
+
+/* Testo traduzione */
+.txt{
+  width:100%;max-width:320px;
+  flex:1;
+  min-height:44px;
+  max-height:100px;
   display:flex;align-items:center;justify-content:center;
-  text-align:center;padding:13px 16px;
-  font-size:20px;line-height:1.5;
-  border-radius:14px;border:1px solid transparent;
+  text-align:center;
+  font-size:18px;line-height:1.45;
+  border-radius:12px;
+  border:1px solid transparent;
+  padding:8px 12px;
   overflow-y:auto;
-  transition:background .25s,border-color .25s;
+  transition:background .2s,border-color .2s;
 }
-.transcript.ph{color:var(--muted);font-style:italic;font-size:14px}
-.transcript.listening{background:rgba(79,159,255,0.09);border-color:rgba(79,159,255,0.38)}
-.transcript.speaking{background:rgba(79,240,208,0.09);border-color:rgba(79,240,208,0.38)}
+.txt.ph{color:var(--muted);font-style:italic;font-size:13px}
+.txt.on{background:rgba(79,159,255,0.09);border-color:rgba(79,159,255,0.4)}
+.txt.say{background:rgba(79,240,208,0.09);border-color:rgba(79,240,208,0.4)}
 
-/* STATUS */
-.st{font-size:13px;color:var(--cyan);display:flex;align-items:center;gap:6px;min-height:20px;flex-shrink:0}
-@keyframes spin{to{transform:rotate(360deg)}}
-.spin{width:13px;height:13px;flex-shrink:0;border:2px solid rgba(79,240,208,0.2);border-top-color:var(--cyan);border-radius:50%;animation:spin .7s linear infinite}
+/* Status spinner */
+.st{
+  font-size:12px;color:var(--cyan);
+  display:flex;align-items:center;gap:5px;
+  height:18px;flex-shrink:0;
+}
+@keyframes sp{to{transform:rotate(360deg)}}
+.spin{width:12px;height:12px;flex-shrink:0;border:2px solid rgba(79,240,208,0.2);border-top-color:var(--cyan);border-radius:50%;animation:sp .7s linear infinite}
 
-/* MIC BUTTON */
-.bwrap{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:7px}
-.tmr{font-size:12px;font-weight:700;color:var(--muted);min-height:16px}
-
+/* Bottone microfono */
 .mic{
-  width:104px;height:104px;
-  border-radius:50%;border:none;background:transparent;
-  cursor:pointer;position:relative;
+  flex-shrink:0;
+  width:96px;height:96px;
+  border-radius:50%;border:none;
+  background:transparent;
+  cursor:pointer;
+  position:relative;
   display:flex;align-items:center;justify-content:center;
   -webkit-tap-highlight-color:transparent;
   touch-action:manipulation;
-  transition:transform .1s;
 }
-.mic:active{transform:scale(0.84)}
-.inner{
+.mic:active{opacity:.8}
+
+.face{
   position:absolute;inset:0;border-radius:50%;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:5px;font-size:13px;font-weight:700;color:#fff;pointer-events:none;
+  gap:4px;font-size:12px;font-weight:700;color:#fff;pointer-events:none;
 }
-.inner svg{width:34px;height:34px}
-.mic.blue .inner{background:linear-gradient(135deg,#4f9fff,#1e58cc);box-shadow:0 6px 28px rgba(79,159,255,0.55),inset 0 0 0 1px rgba(255,255,255,0.15)}
-.mic.red  .inner{background:linear-gradient(135deg,#ff5f7e,#a01e3c);box-shadow:0 6px 28px rgba(255,95,126,0.55),inset 0 0 0 1px rgba(255,255,255,0.15)}
+.face svg{width:30px;height:30px}
 
-.ring-svg{position:absolute;inset:-8px;width:calc(100% + 16px);height:calc(100% + 16px);pointer-events:none;transform:rotate(-90deg)}
-.rb{fill:none;stroke:rgba(255,255,255,0.07);stroke-width:3.5}
-.rf{fill:none;stroke-width:3.5;stroke-linecap:round;transition:stroke-dashoffset .1s linear}
-.mic.blue .rf{stroke:var(--blue)}
-.mic.red  .rf{stroke:var(--red)}
+.mic.blu .face{background:linear-gradient(135deg,#4f9fff,#1e58cc);box-shadow:0 5px 24px rgba(79,159,255,0.5),inset 0 0 0 1px rgba(255,255,255,0.14)}
+.mic.red .face{background:linear-gradient(135deg,#ff5f7e,#a01e3c);box-shadow:0 5px 24px rgba(255,95,126,0.5),inset 0 0 0 1px rgba(255,255,255,0.14)}
 
-@keyframes pr{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.9);opacity:0}}
-.mic.recording::after{content:'';position:absolute;inset:-8px;border-radius:50%;border:2.5px solid currentColor;animation:pr 1.1s ease-out infinite}
-.mic.blue.recording{color:var(--blue)}
-.mic.red.recording{color:var(--red)}
+/* Ring timer */
+.rsvg{position:absolute;inset:-7px;width:calc(100%+14px);height:calc(100%+14px);pointer-events:none;transform:rotate(-90deg)}
+.rb{fill:none;stroke:rgba(255,255,255,0.07);stroke-width:3}
+.rf{fill:none;stroke-width:3;stroke-linecap:round;transition:stroke-dashoffset .1s}
+.mic.blu .rf{stroke:var(--blue)}
+.mic.red .rf{stroke:var(--red)}
 
-@keyframes ps{0%{transform:scale(1);opacity:.5}100%{transform:scale(2);opacity:0}}
-.mic.speaking::after{content:'';position:absolute;inset:-8px;border-radius:50%;border:2.5px solid var(--cyan);animation:ps .9s ease-out infinite}
+/* Pulse registrazione */
+@keyframes pr{0%{transform:scale(1);opacity:.55}100%{transform:scale(1.9);opacity:0}}
+.mic.rec::after{content:'';position:absolute;inset:-7px;border-radius:50%;border:2px solid currentColor;animation:pr 1.1s ease-out infinite}
+.mic.blu.rec{color:var(--blue)}
+.mic.red.rec{color:var(--red)}
 
-/* DIVIDER */
-.divider{flex-shrink:0;height:28px;display:flex;align-items:center;justify-content:center;gap:20px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:rgba(255,255,255,0.012)}
-.divider svg{width:18px;height:18px;color:var(--muted)}
+/* Pulse parlando */
+@keyframes ps{0%{transform:scale(1);opacity:.45}100%{transform:scale(2);opacity:0}}
+.mic.say::after{content:'';position:absolute;inset:-7px;border-radius:50%;border:2px solid var(--cyan);animation:ps .9s ease-out infinite}
 
-/* TOAST */
-#toast{position:fixed;bottom:calc(14px + var(--safe-b));left:50%;transform:translateX(-50%) translateY(14px);background:rgba(16,16,36,0.97);border:1px solid rgba(255,255,255,0.22);border-radius:50px;padding:10px 22px;font-size:14px;font-weight:600;color:var(--text);z-index:999;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);white-space:nowrap;max-width:92vw;text-align:center}
+/* Timer */
+.tmr{font-size:11px;font-weight:700;color:var(--muted);height:14px;flex-shrink:0}
+
+/* Toast */
+#toast{
+  position:fixed;bottom:calc(12px + env(safe-area-inset-bottom,0px));
+  left:50%;transform:translateX(-50%) translateY(12px);
+  background:rgba(16,16,36,.97);border:1px solid rgba(255,255,255,.22);
+  border-radius:50px;padding:9px 20px;
+  font-size:13px;font-weight:600;color:var(--text);
+  z-index:999;opacity:0;transition:opacity .22s,transform .22s;
+  pointer-events:none;
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  white-space:nowrap;max-width:90vw;text-align:center;
+}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-
-/* Audio elemento nascosto */
-#tts-audio{display:none}
 </style>
 </head>
 <body>
 <div id="app">
-  <div id="mirror">
 
-    <!-- INTERLOCUTORE (ruotato) -->
-    <div class="half top">
-      <select class="lang-sel" id="lang-b" onchange="onLC('b')">
-        <option value="en">🇬🇧 English</option>
-        <option value="es">🇪🇸 Español</option>
-        <option value="fr">🇫🇷 Français</option>
-        <option value="de">🇩🇪 Deutsch</option>
-        <option value="pt">🇵🇹 Português</option>
-        <option value="ru">🇷🇺 Русский</option>
-        <option value="zh">🇨🇳 中文</option>
-        <option value="ar">🇸🇦 العربية</option>
-        <option value="bg">🇧🇬 Български</option>
-        <option value="cs">🇨🇿 Čeština</option>
-      </select>
-      <div class="transcript ph" id="tr-b">…</div>
-      <div class="st" id="st-b"></div>
-      <div class="bwrap">
-        <div class="tmr" id="tmr-b"></div>
-        <button class="mic red" id="btn-b" onclick="tapMic('b')">
-          <svg class="ring-svg" viewBox="0 0 120 120">
-            <circle class="rb" cx="60" cy="60" r="54"/>
-            <circle class="rf" id="ring-b" cx="60" cy="60" r="54" stroke-dasharray="339" stroke-dashoffset="339"/>
-          </svg>
-          <div class="inner">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/>
-            </svg>
-            <span id="lbl-b">Speak</span>
-          </div>
-        </button>
+  <!-- INTERLOCUTORE (ruotato 180°) -->
+  <div class="half top">
+    <select class="sel" id="lb" onchange="onLC('b')">
+      <option value="en">🇬🇧 English</option>
+      <option value="es">🇪🇸 Español</option>
+      <option value="fr">🇫🇷 Français</option>
+      <option value="de">🇩🇪 Deutsch</option>
+      <option value="pt">🇵🇹 Português</option>
+      <option value="ru">🇷🇺 Русский</option>
+      <option value="zh">🇨🇳 中文</option>
+      <option value="ar">🇸🇦 العربية</option>
+      <option value="bg">🇧🇬 Български</option>
+      <option value="cs">🇨🇿 Čeština</option>
+    </select>
+    <div class="txt ph" id="tb">…</div>
+    <div class="st" id="sb"></div>
+    <div class="tmr" id="mb"></div>
+    <button class="mic red" id="bb" onclick="tap('b')">
+      <svg class="rsvg" viewBox="0 0 110 110">
+        <circle class="rb" cx="55" cy="55" r="50"/>
+        <circle class="rf" id="rb" cx="55" cy="55" r="50" stroke-dasharray="314" stroke-dashoffset="314"/>
+      </svg>
+      <div class="face">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/>
+        </svg>
+        <span id="nlb">Speak</span>
       </div>
-    </div>
-
-    <!-- DIVISORE -->
-    <div class="divider">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
-    </div>
-
-    <!-- IO -->
-    <div class="half">
-      <select class="lang-sel" id="lang-a" onchange="onLC('a')">
-        <option value="it" selected>🇮🇹 Italiano</option>
-        <option value="en">🇬🇧 English</option>
-        <option value="es">🇪🇸 Español</option>
-        <option value="fr">🇫🇷 Français</option>
-        <option value="de">🇩🇪 Deutsch</option>
-        <option value="pt">🇵🇹 Português</option>
-        <option value="ru">🇷🇺 Русский</option>
-        <option value="zh">🇨🇳 中文</option>
-        <option value="ar">🇸🇦 العربية</option>
-        <option value="bg">🇧🇬 Български</option>
-        <option value="cs">🇨🇿 Čeština</option>
-      </select>
-      <div class="transcript ph" id="tr-a">…</div>
-      <div class="st" id="st-a"></div>
-      <div class="bwrap">
-        <div class="tmr" id="tmr-a"></div>
-        <button class="mic blue" id="btn-a" onclick="tapMic('a')">
-          <svg class="ring-svg" viewBox="0 0 120 120">
-            <circle class="rb" cx="60" cy="60" r="54"/>
-            <circle class="rf" id="ring-a" cx="60" cy="60" r="54" stroke-dasharray="339" stroke-dashoffset="339"/>
-          </svg>
-          <div class="inner">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/>
-            </svg>
-            <span id="lbl-a">Parla</span>
-          </div>
-        </button>
-      </div>
-    </div>
-
+    </button>
   </div>
-</div>
 
-<!-- Elemento audio per TTS — funziona su iOS senza restrizioni -->
-<audio id="tts-audio" playsinline webkit-playsinline></audio>
+  <!-- DIVISORE -->
+  <div class="div">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
+  </div>
+
+  <!-- IO -->
+  <div class="half">
+    <select class="sel" id="la" onchange="onLC('a')">
+      <option value="it" selected>🇮🇹 Italiano</option>
+      <option value="en">🇬🇧 English</option>
+      <option value="es">🇪🇸 Español</option>
+      <option value="fr">🇫🇷 Français</option>
+      <option value="de">🇩🇪 Deutsch</option>
+      <option value="pt">🇵🇹 Português</option>
+      <option value="ru">🇷🇺 Русский</option>
+      <option value="zh">🇨🇳 中文</option>
+      <option value="ar">🇸🇦 العربية</option>
+      <option value="bg">🇧🇬 Български</option>
+      <option value="cs">🇨🇿 Čeština</option>
+    </select>
+    <div class="txt ph" id="ta">…</div>
+    <div class="st" id="sa"></div>
+    <div class="tmr" id="ma"></div>
+    <button class="mic blu" id="ba" onclick="tap('a')">
+      <svg class="rsvg" viewBox="0 0 110 110">
+        <circle class="rb" cx="55" cy="55" r="50"/>
+        <circle class="rf" id="ra" cx="55" cy="55" r="50" stroke-dasharray="314" stroke-dashoffset="314"/>
+      </svg>
+      <div class="face">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/>
+        </svg>
+        <span id="nla">Parla</span>
+      </div>
+    </button>
+  </div>
+
+</div>
 <div id="toast"></div>
 
 <script>
 'use strict';
 /*
- ════════════════════════════════════════════════════════════
-  MIRRORTALK v7 — TTS via elemento <audio> (fix iOS definitivo)
-
-  Perché SpeechSynthesis non funziona su iOS Safari:
-  Apple blocca speak() in contesti async/Promise anche con
-  unlock preventivo. Non esiste workaround affidabile.
-
-  SOLUZIONE: elemento <audio> + URL TTS esterno.
-  Un tag <audio> con .play() chiamato in onclick funziona
-  SEMPRE su iOS senza restrizioni, purché l'elemento sia
-  stato interagito almeno una volta (lo facciamo al primo tap).
-
-  TTS GRATUITI usati (in cascata):
-  1. Google TTS (non ufficiale ma affidabilissimo, stessa
-     voce di Google Translate) — nessuna API key
-  2. MyMemory TTS — fallback
-
-  FLUSSO:
-  • Premi mic → parla → silenzio → traduce → audio parte subito
-  ════════════════════════════════════════════════════════════
+ ═══════════════════════════════════════════════════════
+  TTS: ResponsiveVoice (https://responsivevoice.org)
+  Funziona su iOS Safari, Android Chrome, desktop.
+  Versione gratuita: voce sintetica di qualità.
+  
+  Traduzione: MyMemory API (gratuita)
+  STT: Web Speech API nativa
+ ═══════════════════════════════════════════════════════
 */
 
-const LANGS = {
-  it:{l:'Parla',  b:'it-IT', g:'it', n:'Italiano' },
-  en:{l:'Speak',  b:'en-US', g:'en', n:'English'  },
-  es:{l:'Hablar', b:'es-ES', g:'es', n:'Español'  },
-  fr:{l:'Parler', b:'fr-FR', g:'fr', n:'Français' },
-  de:{l:'Sprechen',b:'de-DE',g:'de', n:'Deutsch'  },
-  pt:{l:'Falar',  b:'pt-PT', g:'pt', n:'Português'},
-  ru:{l:'Говорить',b:'ru-RU',g:'ru', n:'Русский'  },
-  zh:{l:'说话',   b:'zh-CN', g:'zh-CN',n:'中文'   },
-  ar:{l:'تكلم',  b:'ar-SA', g:'ar', n:'العربية'  },
-  bg:{l:'Говори', b:'bg-BG', g:'bg', n:'Български'},
-  cs:{l:'Mluvit', b:'cs-CZ', g:'cs', n:'Čeština' },
+// Mappa lingua → voce ResponsiveVoice
+const RV = {
+  it:'Italian Female',
+  en:'UK English Female',
+  es:'Spanish Female',
+  fr:'French Female',
+  de:'Deutsch Female',
+  pt:'Brazilian Portuguese Female',
+  ru:'Russian Female',
+  zh:'Chinese Female',
+  ar:'Arabic Female',
+  bg:'Bulgarian Female',  // potrebbe fare fallback a default
+  cs:'Czech Female',       // idem
 };
 
-const DEEPL = null; // opz: 'chiave-deepl-free:fx'
+// Mappa lingua → codice BCP47 per STT
+const BCP = {
+  it:'it-IT', en:'en-US', es:'es-ES', fr:'fr-FR',
+  de:'de-DE', pt:'pt-PT', ru:'ru-RU', zh:'zh-CN',
+  ar:'ar-SA', bg:'bg-BG', cs:'cs-CZ',
+};
 
-// ── Helpers ───────────────────────────────────────────────
-const gl  = s => document.getElementById('lang-'+s).value;
-const LC  = s => LANGS[gl(s)] || LANGS.it;
-const $   = id => document.getElementById(id);
+// Label bottone per lingua
+const LBL = {
+  it:'Parla', en:'Speak', es:'Hablar', fr:'Parler',
+  de:'Sprechen', pt:'Falar', ru:'Говорить', zh:'说话',
+  ar:'تكلم', bg:'Говори', cs:'Mluvit',
+};
 
-function onLC(s){ $('lbl-'+s).textContent = LC(s).l; }
+const $ = id => document.getElementById(id);
+const glA = () => $('la').value;
+const glB = () => $('lb').value;
+const gl  = s => s==='a' ? glA() : glB();
+
+function onLC(s){
+  const lang = gl(s);
+  $('nl'+(s==='a'?'a':'b')).textContent = LBL[lang]||'Speak';
+}
 
 let toastT;
-function toast(m, ms=2800){
-  const el=$('toast');
-  el.textContent=m; el.classList.add('show');
-  clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove('show'),ms);
+function toast(m,ms=2600){
+  const e=$('toast'); e.textContent=m; e.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>e.classList.remove('show'),ms);
 }
 
-// ── Elemento audio (unica istanza, riutilizzata) ──────────
-const AUD = $('tts-audio');
-let audUnlocked = false;
+// ── SPEAK con ResponsiveVoice ──────────────────────────
+function speak(text, lang, btnId){
+  const voice = RV[lang] || 'UK English Female';
+  const btn   = $(btnId);
 
-// Al primo clic dell'utente, fai un play silenzioso per sbloccare
-// l'elemento audio su iOS (deve avvenire in un click diretto)
-function unlockAudio(){
-  if(audUnlocked) return;
-  audUnlocked = true;
-  // Breve audio silenzioso in base64 (WAV 0.1s muto)
-  AUD.src = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
-  AUD.volume = 0;
-  AUD.play().catch(()=>{});
-  AUD.volume = 1;
-}
+  // Ferma audio precedente
+  if(window.responsiveVoice) responsiveVoice.cancel();
 
-// ── TTS via Google Translate (non ufficiale, stessa API usata
-//    dall'app Google Translate — funziona su iOS come file audio) ─
-function ttsUrl(text, lang){
-  const lc = LANGS[lang];
-  const gl = lc?.g || lang;
-  // Google TTS endpoint (stesso usato da translate.google.com)
-  return `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=${gl}&client=tw-ob`;
-}
+  btn.classList.add('say');
 
-let speakTimeout;
-function speakAudio(text, lang, btnId){
-  clearTimeout(speakTimeout);
-  if(!text) return;
-
-  const btn = $(btnId);
-  btn.classList.add('speaking');
-
-  // Imposta src e play — su iOS funziona perché AUD è già sbloccato
-  AUD.src = ttsUrl(text, lang);
-  AUD.load();
-
-  const tryPlay = () => {
-    AUD.play().catch(e => {
-      console.warn('Audio play failed:', e);
-      // Fallback: SpeechSynthesis (potrebbe funzionare su Android/desktop)
-      fallbackSpeak(text, lang);
+  if(window.responsiveVoice && responsiveVoice.voiceSupport()){
+    responsiveVoice.speak(text, voice, {
+      rate: 0.9,
+      pitch: 1,
+      onend: () => btn.classList.remove('say'),
+      onerror: () => {
+        btn.classList.remove('say');
+        fallback(text, lang);
+      }
     });
-  };
-
-  // Un piccolo delay per far caricare l'audio
-  speakTimeout = setTimeout(tryPlay, 200);
-
-  AUD.onended = () => {
-    btn.classList.remove('speaking');
-  };
-  AUD.onerror = () => {
-    btn.classList.remove('speaking');
-    // Prova fallback SpeechSynthesis
-    fallbackSpeak(text, lang);
-  };
+  } else {
+    fallback(text, lang);
+    btn.classList.remove('say');
+  }
 }
 
-function fallbackSpeak(text, lang){
+// Fallback: SpeechSynthesis nativa (Android/desktop)
+function fallback(text, lang){
   if(!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
-  u.lang = LANGS[lang]?.b || 'en-US';
-  u.rate = 0.9;
-  const vs = window.speechSynthesis.getVoices();
+  u.lang  = BCP[lang] || 'en-US';
+  u.rate  = 0.9;
+  const vs = speechSynthesis.getVoices();
   const px = u.lang.slice(0,2);
-  u.voice = vs.find(v=>v.lang.startsWith(px)) || null;
-  window.speechSynthesis.speak(u);
+  u.voice  = vs.find(v=>v.lang.startsWith(px)) || null;
+  speechSynthesis.speak(u);
 }
 
-// ── Traduzione ────────────────────────────────────────────
-async function doTranslate(text, from, to){
+// ── TRADUZIONE MyMemory ────────────────────────────────
+async function translate(text, from, to){
   if(!text || from===to) return text;
-
-  // DeepL opzionale
-  if(DEEPL){
-    try{
-      const r = await fetch('https://api-free.deepl.com/v2/translate',{
-        method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
-        body: new URLSearchParams({auth_key:DEEPL, text,
-          source_lang: (LANGS[from]?.d||from).toUpperCase(),
-          target_lang: (LANGS[to]?.d||to).toUpperCase()})
-      });
-      const d = await r.json();
-      if(d.translations?.[0]?.text) return d.translations[0].text;
-    }catch(e){}
-  }
-
-  // MyMemory gratuito
   try{
-    const r = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`);
+    const r = await fetch(
+      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`
+    );
     const d = await r.json();
     if(d.responseStatus===200 && d.responseData?.translatedText){
       const t = d.responseData.translatedText;
@@ -371,129 +359,109 @@ async function doTranslate(text, from, to){
         return t;
     }
   }catch(e){}
-
   return text;
 }
 
-// ── MICROFONO ─────────────────────────────────────────────
-let rec=null, recSide=null, recTimer=null, recSec=0, recBest='';
-const MAX_SEC = 12;
+// ── MICROFONO ─────────────────────────────────────────
+let rec=null, rSide=null, rTimer=null, rSec=0, rBest='';
+const MAX=12;
 
-function tapMic(side){
-  // unlock audio al primo tap (nel click, gesto diretto)
-  unlockAudio();
-
-  if(recSide===side){ finishRec(); return; }
-  if(recSide){ cancelRec(); }
-  startRec(side);
+function tap(side){
+  if(rSide===side){ stop(); return; }
+  if(rSide) cancel();
+  start(side);
 }
 
-function startRec(side){
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if(!SR){ toast('⚠️ Usa Safari su iPhone o Chrome su Android'); return; }
+function start(side){
+  const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){ toast('Usa Safari (iPhone) o Chrome (Android)'); return; }
 
-  const lc = LC(side);
-  recSide=side; recBest='';
+  const lang = gl(side);
+  rSide=side; rBest='';
 
-  const btn   = $('btn-'+side);
-  const ta    = $('tr-'+side);
-  const tmr   = $('tmr-'+side);
-  const ring  = $('ring-'+side);
-
-  btn.classList.add('recording');
-  $('lbl-'+side).textContent = '⏹';
-  ta.className='transcript listening';
+  const btn=$('b'+side), ta=$('t'+side), tmr=$('m'+side), ring=$('r'+side);
+  btn.classList.add('rec');
+  $('nl'+(side==='a'?'a':'b')).textContent='⏹';
+  ta.className='txt on';
   ta.textContent='🎙️ …';
+  tmr.textContent='';
 
-  recSec = MAX_SEC;
-  const C = 339;
-  ring.style.strokeDashoffset = C;
-  recTimer = setInterval(()=>{
-    recSec--;
-    tmr.textContent = recSec+'s';
-    ring.style.strokeDashoffset = C - ((MAX_SEC-recSec)/MAX_SEC)*C;
-    if(recSec<=0) finishRec();
-  }, 1000);
+  rSec=MAX;
+  const C=314;
+  ring.style.strokeDashoffset=C;
+  rTimer=setInterval(()=>{
+    rSec--;
+    tmr.textContent=rSec+'s';
+    ring.style.strokeDashoffset=C-((MAX-rSec)/MAX)*C;
+    if(rSec<=0) stop();
+  },1000);
 
-  rec = new SR();
-  rec.lang = lc.b;
-  rec.interimResults = true;
-  rec.continuous = false; // si ferma automaticamente col silenzio
+  rec=new SR();
+  rec.lang=BCP[lang]||'en-US';
+  rec.interimResults=true;
+  rec.continuous=false;
 
-  rec.onresult = e => {
-    recBest = ''; let interim='';
+  rec.onresult=e=>{
+    rBest=''; let tmp='';
     for(let i=0;i<e.results.length;i++){
-      if(e.results[i].isFinal) recBest += e.results[i][0].transcript+' ';
-      else interim += e.results[i][0].transcript;
+      if(e.results[i].isFinal) rBest+=e.results[i][0].transcript+' ';
+      else tmp+=e.results[i][0].transcript;
     }
-    ta.textContent = (recBest+interim).trim() || '🎙️ …';
+    ta.textContent=(rBest+tmp).trim()||'🎙️ …';
   };
-
-  rec.onerror = e => {
-    if(e.error==='no-speech'){ finishRec(); return; }
+  rec.onerror=e=>{
+    if(e.error==='no-speech'){stop();return;}
     if(e.error!=='aborted') toast('❌ '+e.error);
-    cancelRec();
+    cancel();
   };
-
-  // Si ferma da solo quando l'utente smette di parlare
-  rec.onend = () => { if(recSide===side) finishRec(); };
+  rec.onend=()=>{ if(rSide===side) stop(); };
 
   try{ rec.start(); }
-  catch(e){ toast('❌ Microfono non disponibile'); cancelRec(); }
+  catch(e){ toast('❌ Microfono non disponibile'); cancel(); }
 }
 
-async function finishRec(){
-  if(!recSide) return;
-  const side=recSide, from=gl(side), text=recBest.trim();
-  clearUI(side);
+async function stop(){
+  if(!rSide) return;
+  const side=rSide, lang=gl(side), text=rBest.trim();
+  reset(side);
 
-  const ta = $('tr-'+side);
-  if(!text){ ta.className='transcript ph'; ta.textContent='…'; return; }
-  ta.className='transcript';
-  ta.textContent = text;
+  const ta=$('t'+side);
+  if(!text){ ta.className='txt ph'; ta.textContent='…'; return; }
+  ta.className='txt'; ta.textContent=text;
 
-  // Altra metà
-  const other  = side==='a' ? 'b' : 'a';
-  const toLang = gl(other);
-  const oTA    = $('tr-'+other);
-  const oSt    = $('st-'+other);
+  const other=side==='a'?'b':'a';
+  const toLang=gl(other);
+  const oTA=$('t'+other), oSt=$('s'+other);
 
-  oTA.className='transcript'; oTA.textContent='…';
+  oTA.className='txt'; oTA.textContent='…';
   oSt.innerHTML='<div class="spin"></div>';
 
-  const translated = await doTranslate(text, from, toLang);
-  oSt.innerHTML = '';
+  const out = await translate(text, lang, toLang);
+  oSt.innerHTML='';
 
-  const final = translated || text;
-  oTA.className='transcript speaking';
-  oTA.textContent = final;
+  const final=out||text;
+  oTA.className='txt say';
+  oTA.textContent=final;
 
-  // ★ PARLA — usa elemento <audio> che funziona su iOS
-  speakAudio(final, toLang, 'btn-'+other);
+  // ★ PARLA con ResponsiveVoice
+  speak(final, toLang, 'b'+other);
 }
 
-function cancelRec(){ clearUI(recSide); }
+function cancel(){ reset(rSide); }
 
-function clearUI(side){
-  clearInterval(recTimer); recTimer=null;
-  if(rec){ try{rec.abort();}catch(e){} rec=null; }
+function reset(side){
+  clearInterval(rTimer); rTimer=null;
+  if(rec){try{rec.abort();}catch(e){} rec=null;}
   if(!side) return;
-  $('btn-'+side).classList.remove('recording','speaking');
-  $('lbl-'+side).textContent = LC(side).l;
-  $('tmr-'+side).textContent = '';
-  $('ring-'+side).style.strokeDashoffset = '339';
-  $('tr-'+side).classList.remove('listening');
-  recSide = null;
+  $('b'+side).classList.remove('rec','say');
+  $('nl'+(side==='a'?'a':'b')).textContent = LBL[gl(side)]||'Speak';
+  $('m'+side).textContent='';
+  $('r'+side).style.strokeDashoffset='314';
+  $('t'+side).classList.remove('on');
+  rSide=null;
 }
 
-// ── Init ──────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', ()=>{
-  onLC('a'); onLC('b');
-  if(window.speechSynthesis){
-    window.speechSynthesis.getVoices();
-    window.speechSynthesis.onvoiceschanged=()=>window.speechSynthesis.getVoices();
-  }
-});
+document.addEventListener('DOMContentLoaded',()=>{ onLC('a'); onLC('b'); });
 </script>
 </body>
 </html>
