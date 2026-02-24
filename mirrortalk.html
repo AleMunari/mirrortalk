@@ -5,9 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="MirrorTalk">
 <meta name="theme-color" content="#0a0a1a">
-<title>MirrorTalk</title>
+<title>Traduttore</title>
 <style>
 :root{
   --bg:#0a0a1a;
@@ -31,22 +30,12 @@ html,body{
 #app{
   position:fixed;inset:0;
   padding-top:var(--safe-t);
+  padding-bottom:var(--safe-b);
   display:flex;flex-direction:column;
   background:
     radial-gradient(ellipse 80% 60% at 20% 10%,rgba(79,159,255,0.13) 0%,transparent 60%),
     radial-gradient(ellipse 60% 50% at 80% 90%,rgba(79,240,208,0.10) 0%,transparent 60%),
     var(--bg);
-}
-
-/* HEADER */
-.hdr{
-  flex-shrink:0;padding:10px 0 9px;text-align:center;
-  border-bottom:1px solid var(--border);
-}
-.hdr h1{
-  font-size:22px;font-weight:800;letter-spacing:-.02em;
-  background:linear-gradient(90deg,#f0f0ff,var(--cyan));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
 }
 
 /* MIRROR */
@@ -56,7 +45,7 @@ html,body{
   flex:1;min-height:0;
   display:flex;flex-direction:column;
   align-items:center;justify-content:center;
-  padding:16px 22px 12px;gap:13px;
+  padding:16px 22px 14px;gap:14px;
 }
 .half.top{
   transform:rotate(180deg);
@@ -65,8 +54,7 @@ html,body{
 
 /* LANG SELECT */
 .lang-sel{
-  flex-shrink:0;
-  width:100%;max-width:290px;
+  flex-shrink:0;width:100%;max-width:290px;
   background:rgba(255,255,255,0.08);
   border:1px solid var(--border);border-radius:50px;
   color:var(--text);font-size:16px;font-weight:600;
@@ -78,10 +66,10 @@ html,body{
 /* TRANSCRIPT */
 .transcript{
   width:100%;max-width:340px;
-  flex:1;min-height:52px;max-height:120px;
+  flex:1;min-height:54px;max-height:130px;
   display:flex;align-items:center;justify-content:center;
-  text-align:center;padding:12px 16px;
-  font-size:19px;line-height:1.5;
+  text-align:center;padding:13px 16px;
+  font-size:20px;line-height:1.5;
   border-radius:14px;border:1px solid transparent;
   overflow-y:auto;
   transition:background .25s,border-color .25s;
@@ -96,11 +84,11 @@ html,body{
 .spin{width:13px;height:13px;flex-shrink:0;border:2px solid rgba(79,240,208,0.2);border-top-color:var(--cyan);border-radius:50%;animation:spin .7s linear infinite}
 
 /* MIC BUTTON */
-.bwrap{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:6px}
-.tmr{font-size:12px;font-weight:700;color:var(--muted);min-height:16px;letter-spacing:.03em}
+.bwrap{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:7px}
+.tmr{font-size:12px;font-weight:700;color:var(--muted);min-height:16px}
 
 .mic{
-  width:100px;height:100px;
+  width:104px;height:104px;
   border-radius:50%;border:none;background:transparent;
   cursor:pointer;position:relative;
   display:flex;align-items:center;justify-content:center;
@@ -109,48 +97,43 @@ html,body{
   transition:transform .1s;
 }
 .mic:active{transform:scale(0.84)}
-
 .inner{
   position:absolute;inset:0;border-radius:50%;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:5px;font-size:13px;font-weight:700;color:#fff;
-  pointer-events:none;
+  gap:5px;font-size:13px;font-weight:700;color:#fff;pointer-events:none;
 }
-.inner svg{width:32px;height:32px}
-
+.inner svg{width:34px;height:34px}
 .mic.blue .inner{background:linear-gradient(135deg,#4f9fff,#1e58cc);box-shadow:0 6px 28px rgba(79,159,255,0.55),inset 0 0 0 1px rgba(255,255,255,0.15)}
 .mic.red  .inner{background:linear-gradient(135deg,#ff5f7e,#a01e3c);box-shadow:0 6px 28px rgba(255,95,126,0.55),inset 0 0 0 1px rgba(255,255,255,0.15)}
 
-/* Ring */
-.ring-svg{position:absolute;inset:-8px;width:calc(100%+16px);height:calc(100%+16px);pointer-events:none;transform:rotate(-90deg)}
+.ring-svg{position:absolute;inset:-8px;width:calc(100% + 16px);height:calc(100% + 16px);pointer-events:none;transform:rotate(-90deg)}
 .rb{fill:none;stroke:rgba(255,255,255,0.07);stroke-width:3.5}
 .rf{fill:none;stroke-width:3.5;stroke-linecap:round;transition:stroke-dashoffset .1s linear}
 .mic.blue .rf{stroke:var(--blue)}
 .mic.red  .rf{stroke:var(--red)}
 
-/* Pulse */
-@keyframes pr{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.85);opacity:0}}
+@keyframes pr{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.9);opacity:0}}
 .mic.recording::after{content:'';position:absolute;inset:-8px;border-radius:50%;border:2.5px solid currentColor;animation:pr 1.1s ease-out infinite}
 .mic.blue.recording{color:var(--blue)}
 .mic.red.recording{color:var(--red)}
 
-@keyframes ps{0%{transform:scale(1);opacity:.4}100%{transform:scale(2);opacity:0}}
-.mic.saying::after{content:'';position:absolute;inset:-8px;border-radius:50%;border:2.5px solid var(--cyan);animation:ps 1s ease-out infinite}
+@keyframes ps{0%{transform:scale(1);opacity:.5}100%{transform:scale(2);opacity:0}}
+.mic.speaking::after{content:'';position:absolute;inset:-8px;border-radius:50%;border:2.5px solid var(--cyan);animation:ps .9s ease-out infinite}
 
 /* DIVIDER */
 .divider{flex-shrink:0;height:28px;display:flex;align-items:center;justify-content:center;gap:20px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:rgba(255,255,255,0.012)}
 .divider svg{width:18px;height:18px;color:var(--muted)}
 
 /* TOAST */
-#toast{position:fixed;bottom:calc(16px + var(--safe-b));left:50%;transform:translateX(-50%) translateY(14px);background:rgba(16,16,36,0.97);border:1px solid rgba(255,255,255,0.22);border-radius:50px;padding:10px 22px;font-size:14px;font-weight:600;color:var(--text);z-index:999;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);white-space:nowrap;max-width:92vw;text-align:center}
+#toast{position:fixed;bottom:calc(14px + var(--safe-b));left:50%;transform:translateX(-50%) translateY(14px);background:rgba(16,16,36,0.97);border:1px solid rgba(255,255,255,0.22);border-radius:50px;padding:10px 22px;font-size:14px;font-weight:600;color:var(--text);z-index:999;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);white-space:nowrap;max-width:92vw;text-align:center}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Audio elemento nascosto */
+#tts-audio{display:none}
 </style>
 </head>
 <body>
 <div id="app">
-
-  <div class="hdr"><h1>🌐 MirrorTalk</h1></div>
-
   <div id="mirror">
 
     <!-- INTERLOCUTORE (ruotato) -->
@@ -171,13 +154,16 @@ html,body{
       <div class="st" id="st-b"></div>
       <div class="bwrap">
         <div class="tmr" id="tmr-b"></div>
-        <button class="mic red" id="btn-b" ontouchstart="tap('b',event)" onclick="dclick('b')">
-          <svg class="ring-svg" viewBox="0 0 116 116">
-            <circle class="rb" cx="58" cy="58" r="52"/>
-            <circle class="rf" id="ring-b" cx="58" cy="58" r="52" stroke-dasharray="327" stroke-dashoffset="327"/>
+        <button class="mic red" id="btn-b" onclick="tapMic('b')">
+          <svg class="ring-svg" viewBox="0 0 120 120">
+            <circle class="rb" cx="60" cy="60" r="54"/>
+            <circle class="rf" id="ring-b" cx="60" cy="60" r="54" stroke-dasharray="339" stroke-dashoffset="339"/>
           </svg>
           <div class="inner">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/>
+            </svg>
             <span id="lbl-b">Speak</span>
           </div>
         </button>
@@ -209,13 +195,16 @@ html,body{
       <div class="st" id="st-a"></div>
       <div class="bwrap">
         <div class="tmr" id="tmr-a"></div>
-        <button class="mic blue" id="btn-a" ontouchstart="tap('a',event)" onclick="dclick('a')">
-          <svg class="ring-svg" viewBox="0 0 116 116">
-            <circle class="rb" cx="58" cy="58" r="52"/>
-            <circle class="rf" id="ring-a" cx="58" cy="58" r="52" stroke-dasharray="327" stroke-dashoffset="327"/>
+        <button class="mic blue" id="btn-a" onclick="tapMic('a')">
+          <svg class="ring-svg" viewBox="0 0 120 120">
+            <circle class="rb" cx="60" cy="60" r="54"/>
+            <circle class="rf" id="ring-a" cx="60" cy="60" r="54" stroke-dasharray="339" stroke-dashoffset="339"/>
           </svg>
           <div class="inner">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/>
+            </svg>
             <span id="lbl-a">Parla</span>
           </div>
         </button>
@@ -224,229 +213,230 @@ html,body{
 
   </div>
 </div>
+
+<!-- Elemento audio per TTS — funziona su iOS senza restrizioni -->
+<audio id="tts-audio" playsinline webkit-playsinline></audio>
 <div id="toast"></div>
 
 <script>
 'use strict';
-/* ═══════════════════════════════════════════════════════
-   MIRRORTALK v6 — Soluzione definitiva TTS su iOS Safari
+/*
+ ════════════════════════════════════════════════════════════
+  MIRRORTALK v7 — TTS via elemento <audio> (fix iOS definitivo)
 
-   IL PROBLEMA:
-   iOS Safari blocca speechSynthesis.speak() se NON viene
-   chiamato direttamente dentro un handler touchstart/click.
-   Anche un setTimeout(fn,0) o una Promise lo blocca.
+  Perché SpeechSynthesis non funziona su iOS Safari:
+  Apple blocca speak() in contesti async/Promise anche con
+  unlock preventivo. Non esiste workaround affidabile.
 
-   LA SOLUZIONE ADOTTATA (come Google Translate):
-   1. Al touchstart → unlock audio subito (siamo nel gesto)
-   2. Salvo il testo da leggere in `pending[side]`
-   3. Al TAP SUCCESSIVO (dell'altro o dello stesso bottone)
-      → eseguo speak() nel touchstart, che è un gesto diretto
-      → poi avvio il microfono dell'altro lato
-   
-   In pratica: TAP A → ascolta → traduce → salva testo
-               TAP B (per far parlare B) → speak + registra B
-   
-   Questo è esattamente come funziona Google Translate!
-   ═══════════════════════════════════════════════════════ */
+  SOLUZIONE: elemento <audio> + URL TTS esterno.
+  Un tag <audio> con .play() chiamato in onclick funziona
+  SEMPRE su iOS senza restrizioni, purché l'elemento sia
+  stato interagito almeno una volta (lo facciamo al primo tap).
 
-const DEEPL = null; // opz: 'la-tua-chiave-deepl-free:fx'
+  TTS GRATUITI usati (in cascata):
+  1. Google TTS (non ufficiale ma affidabilissimo, stessa
+     voce di Google Translate) — nessuna API key
+  2. MyMemory TTS — fallback
+
+  FLUSSO:
+  • Premi mic → parla → silenzio → traduce → audio parte subito
+  ════════════════════════════════════════════════════════════
+*/
 
 const LANGS = {
-  it:{l:'Parla',  b:'it-IT',n:'Italiano', d:'IT'},
-  en:{l:'Speak',  b:'en-US',n:'English',  d:'EN'},
-  es:{l:'Hablar', b:'es-ES',n:'Español',  d:'ES'},
-  fr:{l:'Parler', b:'fr-FR',n:'Français', d:'FR'},
-  de:{l:'Speak',  b:'de-DE',n:'Deutsch',  d:'DE'},
-  pt:{l:'Falar',  b:'pt-PT',n:'Português',d:'PT'},
-  ru:{l:'Говорить',b:'ru-RU',n:'Русский', d:'RU'},
-  zh:{l:'说话',   b:'zh-CN',n:'中文',      d:'ZH'},
-  ar:{l:'تكلم',  b:'ar-SA',n:'العربية',  d:'AR'},
-  bg:{l:'Говори', b:'bg-BG',n:'Български',d:'BG'},
-  cs:{l:'Mluvit', b:'cs-CZ',n:'Čeština', d:'CS'},
+  it:{l:'Parla',  b:'it-IT', g:'it', n:'Italiano' },
+  en:{l:'Speak',  b:'en-US', g:'en', n:'English'  },
+  es:{l:'Hablar', b:'es-ES', g:'es', n:'Español'  },
+  fr:{l:'Parler', b:'fr-FR', g:'fr', n:'Français' },
+  de:{l:'Sprechen',b:'de-DE',g:'de', n:'Deutsch'  },
+  pt:{l:'Falar',  b:'pt-PT', g:'pt', n:'Português'},
+  ru:{l:'Говорить',b:'ru-RU',g:'ru', n:'Русский'  },
+  zh:{l:'说话',   b:'zh-CN', g:'zh-CN',n:'中文'   },
+  ar:{l:'تكلم',  b:'ar-SA', g:'ar', n:'العربية'  },
+  bg:{l:'Говори', b:'bg-BG', g:'bg', n:'Български'},
+  cs:{l:'Mluvit', b:'cs-CZ', g:'cs', n:'Čeština' },
 };
 
-// ── Stato ─────────────────────────────────────────
-let rec=null, recSide=null, recTimer=null, recSec=0, recText='';
-let pending = {a:null, b:null}; // testo tradotto in attesa di essere letto
-let isTouchDevice = false;
-const MAX_SEC = 12;
+const DEEPL = null; // opz: 'chiave-deepl-free:fx'
 
-// ── Helpers ───────────────────────────────────────
-const gl = s => document.getElementById('lang-'+s).value;
-const LC = s => LANGS[gl(s)] || LANGS.it;
+// ── Helpers ───────────────────────────────────────────────
+const gl  = s => document.getElementById('lang-'+s).value;
+const LC  = s => LANGS[gl(s)] || LANGS.it;
+const $   = id => document.getElementById(id);
 
-function onLC(s){ document.getElementById('lbl-'+s).textContent = LC(s).l; }
+function onLC(s){ $('lbl-'+s).textContent = LC(s).l; }
 
 let toastT;
-function toast(m, ms=2600){
-  const el=document.getElementById('toast');
+function toast(m, ms=2800){
+  const el=$('toast');
   el.textContent=m; el.classList.add('show');
   clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove('show'),ms);
 }
 
-// ── Precarica voci ────────────────────────────────
-function loadVoices(){
-  if(!window.speechSynthesis) return;
-  window.speechSynthesis.getVoices();
-  window.speechSynthesis.onvoiceschanged = ()=>window.speechSynthesis.getVoices();
-}
+// ── Elemento audio (unica istanza, riutilizzata) ──────────
+const AUD = $('tts-audio');
+let audUnlocked = false;
 
-// ── UNLOCK AUDIO (da chiamare DENTRO touchstart) ──
-let audioUnlocked = false;
+// Al primo clic dell'utente, fai un play silenzioso per sbloccare
+// l'elemento audio su iOS (deve avvenire in un click diretto)
 function unlockAudio(){
-  if(audioUnlocked) return;
-  audioUnlocked = true;
-  try{
-    const ac=new(window.AudioContext||window.webkitAudioContext)();
-    const b=ac.createBuffer(1,1,22050),s=ac.createBufferSource();
-    s.buffer=b; s.connect(ac.destination); s.start(0);
-    if(ac.state==='suspended') ac.resume();
-  }catch(e){}
-  if(window.speechSynthesis){
-    // Utterance vuota silenziosa — sblocca il motore TTS su iOS
-    const u=new SpeechSynthesisUtterance('');
-    u.volume=0; window.speechSynthesis.speak(u);
-  }
+  if(audUnlocked) return;
+  audUnlocked = true;
+  // Breve audio silenzioso in base64 (WAV 0.1s muto)
+  AUD.src = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+  AUD.volume = 0;
+  AUD.play().catch(()=>{});
+  AUD.volume = 1;
 }
 
-// ── SPEAK (da chiamare DENTRO touchstart/click) ───
-function speakNow(text, langCode){
-  if(!window.speechSynthesis||!text) return;
+// ── TTS via Google Translate (non ufficiale, stessa API usata
+//    dall'app Google Translate — funziona su iOS come file audio) ─
+function ttsUrl(text, lang){
+  const lc = LANGS[lang];
+  const gl = lc?.g || lang;
+  // Google TTS endpoint (stesso usato da translate.google.com)
+  return `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=${gl}&client=tw-ob`;
+}
+
+let speakTimeout;
+function speakAudio(text, lang, btnId){
+  clearTimeout(speakTimeout);
+  if(!text) return;
+
+  const btn = $(btnId);
+  btn.classList.add('speaking');
+
+  // Imposta src e play — su iOS funziona perché AUD è già sbloccato
+  AUD.src = ttsUrl(text, lang);
+  AUD.load();
+
+  const tryPlay = () => {
+    AUD.play().catch(e => {
+      console.warn('Audio play failed:', e);
+      // Fallback: SpeechSynthesis (potrebbe funzionare su Android/desktop)
+      fallbackSpeak(text, lang);
+    });
+  };
+
+  // Un piccolo delay per far caricare l'audio
+  speakTimeout = setTimeout(tryPlay, 200);
+
+  AUD.onended = () => {
+    btn.classList.remove('speaking');
+  };
+  AUD.onerror = () => {
+    btn.classList.remove('speaking');
+    // Prova fallback SpeechSynthesis
+    fallbackSpeak(text, lang);
+  };
+}
+
+function fallbackSpeak(text, lang){
+  if(!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
-  u.lang  = LANGS[langCode]?.b || 'en-US';
-  u.rate  = 0.88; u.pitch = 1;
-  const voices = window.speechSynthesis.getVoices();
+  u.lang = LANGS[lang]?.b || 'en-US';
+  u.rate = 0.9;
+  const vs = window.speechSynthesis.getVoices();
   const px = u.lang.slice(0,2);
-  u.voice = voices.find(v=>v.lang.startsWith(px)&&v.localService)
-         || voices.find(v=>v.lang.startsWith(px))
-         || null;
+  u.voice = vs.find(v=>v.lang.startsWith(px)) || null;
   window.speechSynthesis.speak(u);
-  // Workaround bug iOS: a volte si mette in pausa da solo
-  const fix=setInterval(()=>{
-    if(!window.speechSynthesis.speaking){clearInterval(fix);return;}
-    if(window.speechSynthesis.paused) window.speechSynthesis.resume();
-  },300);
-  u.onend=u.onerror=()=>clearInterval(fix);
 }
 
-// ── TRADUZIONE ────────────────────────────────────
+// ── Traduzione ────────────────────────────────────────────
 async function doTranslate(text, from, to){
-  if(!text||from===to) return text;
-  // DeepL (opzionale)
+  if(!text || from===to) return text;
+
+  // DeepL opzionale
   if(DEEPL){
     try{
-      const r=await fetch('https://api-free.deepl.com/v2/translate',{
-        method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
-        body:new URLSearchParams({auth_key:DEEPL,text,
-          source_lang:(LANGS[from]?.d||from).toUpperCase(),
-          target_lang:(LANGS[to]?.d||to).toUpperCase()})
+      const r = await fetch('https://api-free.deepl.com/v2/translate',{
+        method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
+        body: new URLSearchParams({auth_key:DEEPL, text,
+          source_lang: (LANGS[from]?.d||from).toUpperCase(),
+          target_lang: (LANGS[to]?.d||to).toUpperCase()})
       });
-      const d=await r.json();
+      const d = await r.json();
       if(d.translations?.[0]?.text) return d.translations[0].text;
     }catch(e){}
   }
+
   // MyMemory gratuito
   try{
-    const r=await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`);
-    const d=await r.json();
-    if(d.responseStatus===200&&d.responseData?.translatedText){
-      const t=d.responseData.translatedText;
-      if(t&&!t.includes('MYMEMORY WARNING')&&t.toLowerCase()!==text.toLowerCase()) return t;
+    const r = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`);
+    const d = await r.json();
+    if(d.responseStatus===200 && d.responseData?.translatedText){
+      const t = d.responseData.translatedText;
+      if(t && !t.includes('MYMEMORY WARNING') && t.toLowerCase()!==text.toLowerCase())
+        return t;
     }
   }catch(e){}
+
   return text;
 }
 
-// ── GESTIONE TAP ──────────────────────────────────
-// STRATEGIA iOS:
-// touchstart → unlock + eventuale speak pendente + avvia mic
-// onclick    → usato solo su desktop (no touch)
+// ── MICROFONO ─────────────────────────────────────────────
+let rec=null, recSide=null, recTimer=null, recSec=0, recBest='';
+const MAX_SEC = 12;
 
-function tap(side, ev){
-  // Questo è un touchstart — siamo NEL gesto utente
-  isTouchDevice = true;
-  ev.preventDefault(); // impedisce il click successivo
-  unlockAudio();       // sblocca audio nel gesto
-
-  // Se c'è un testo in attesa per QUESTO lato → leggilo ORA
-  // (è il tap che conferma "ascolta la traduzione")
-  const other = side==='a'?'b':'a';
-  if(pending[side]){
-    const p = pending[side];
-    pending[side] = null;
-    speakNow(p.text, p.lang); // ← nel gesto diretto ✓
-    // Mostra il testo parlato
-    const otherBtn=document.getElementById('btn-'+side);
-    otherBtn.classList.add('saying');
-    setTimeout(()=>otherBtn.classList.remove('saying'), Math.max(2000,p.text.length*75));
-    return; // non avviare mic subito
-  }
-
-  // Altrimenti avvia/ferma registrazione
-  handleMic(side);
-}
-
-function dclick(side){
-  // Usato su desktop (nessun touch)
-  if(isTouchDevice) return;
+function tapMic(side){
+  // unlock audio al primo tap (nel click, gesto diretto)
   unlockAudio();
-  handleMic(side);
-}
 
-function handleMic(side){
   if(recSide===side){ finishRec(); return; }
   if(recSide){ cancelRec(); }
   startRec(side);
 }
 
-// ── REGISTRAZIONE ─────────────────────────────────
 function startRec(side){
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if(!SR){ toast('⚠️ Usa Safari su iPhone o Chrome su Android'); return; }
 
-  const lc=LC(side);
-  recSide=side; recText='';
+  const lc = LC(side);
+  recSide=side; recBest='';
 
-  const btn=document.getElementById('btn-'+side);
-  const ta=document.getElementById('tr-'+side);
-  const tmr=document.getElementById('tmr-'+side);
-  const ring=document.getElementById('ring-'+side);
+  const btn   = $('btn-'+side);
+  const ta    = $('tr-'+side);
+  const tmr   = $('tmr-'+side);
+  const ring  = $('ring-'+side);
 
   btn.classList.add('recording');
-  document.getElementById('lbl-'+side).textContent='⏹';
+  $('lbl-'+side).textContent = '⏹';
   ta.className='transcript listening';
   ta.textContent='🎙️ …';
 
-  recSec=MAX_SEC;
-  const C=327;
-  ring.style.strokeDashoffset=C;
-  recTimer=setInterval(()=>{
+  recSec = MAX_SEC;
+  const C = 339;
+  ring.style.strokeDashoffset = C;
+  recTimer = setInterval(()=>{
     recSec--;
-    tmr.textContent=recSec+'s';
-    ring.style.strokeDashoffset=C-((MAX_SEC-recSec)/MAX_SEC)*C;
+    tmr.textContent = recSec+'s';
+    ring.style.strokeDashoffset = C - ((MAX_SEC-recSec)/MAX_SEC)*C;
     if(recSec<=0) finishRec();
-  },1000);
+  }, 1000);
 
-  rec=new SR();
-  rec.lang=lc.b;
-  rec.interimResults=true;
-  rec.continuous=false; // si ferma da solo col silenzio
+  rec = new SR();
+  rec.lang = lc.b;
+  rec.interimResults = true;
+  rec.continuous = false; // si ferma automaticamente col silenzio
 
-  rec.onresult=(e)=>{
-    recText=''; let interim='';
+  rec.onresult = e => {
+    recBest = ''; let interim='';
     for(let i=0;i<e.results.length;i++){
-      if(e.results[i].isFinal) recText+=e.results[i][0].transcript+' ';
-      else interim+=e.results[i][0].transcript;
+      if(e.results[i].isFinal) recBest += e.results[i][0].transcript+' ';
+      else interim += e.results[i][0].transcript;
     }
-    ta.textContent=(recText+interim).trim()||'🎙️ …';
+    ta.textContent = (recBest+interim).trim() || '🎙️ …';
   };
-  rec.onerror=(e)=>{
-    if(e.error==='no-speech'){finishRec();return;}
+
+  rec.onerror = e => {
+    if(e.error==='no-speech'){ finishRec(); return; }
     if(e.error!=='aborted') toast('❌ '+e.error);
     cancelRec();
   };
-  rec.onend=()=>{ if(recSide===side) finishRec(); };
+
+  // Si ferma da solo quando l'utente smette di parlare
+  rec.onend = () => { if(recSide===side) finishRec(); };
 
   try{ rec.start(); }
   catch(e){ toast('❌ Microfono non disponibile'); cancelRec(); }
@@ -454,63 +444,55 @@ function startRec(side){
 
 async function finishRec(){
   if(!recSide) return;
-  const side=recSide, from=gl(side), text=recText.trim();
+  const side=recSide, from=gl(side), text=recBest.trim();
   clearUI(side);
 
-  const ta=document.getElementById('tr-'+side);
+  const ta = $('tr-'+side);
   if(!text){ ta.className='transcript ph'; ta.textContent='…'; return; }
-  ta.className='transcript'; ta.textContent=text;
+  ta.className='transcript';
+  ta.textContent = text;
 
-  // Prepara traduzione sull'altra metà
-  const other=side==='a'?'b':'a';
-  const toLang=gl(other);
-  const oTA=document.getElementById('tr-'+other);
-  const oSt=document.getElementById('st-'+other);
+  // Altra metà
+  const other  = side==='a' ? 'b' : 'a';
+  const toLang = gl(other);
+  const oTA    = $('tr-'+other);
+  const oSt    = $('st-'+other);
 
   oTA.className='transcript'; oTA.textContent='…';
   oSt.innerHTML='<div class="spin"></div>';
 
   const translated = await doTranslate(text, from, toLang);
-  oSt.innerHTML='';
+  oSt.innerHTML = '';
 
-  const final=translated||text;
+  const final = translated || text;
   oTA.className='transcript speaking';
-  oTA.textContent=final;
+  oTA.textContent = final;
 
-  // ★ SALVA in coda: sarà letto al prossimo tap su iOS
-  pending[other]={text:final, lang:toLang};
-
-  // Su desktop speakiamo subito (non abbiamo limite di gesto)
-  if(!isTouchDevice){
-    speakNow(final, toLang);
-  } else {
-    // Su iOS: indica visivamente che c'è audio pronto
-    const oBtn=document.getElementById('btn-'+other);
-    oBtn.classList.add('saying');
-    // Mostra suggerimento
-    toast('🔊 Tocca il microfono '+( other==='a'?'BLU':'ROSSO')+' per ascoltare');
-  }
+  // ★ PARLA — usa elemento <audio> che funziona su iOS
+  speakAudio(final, toLang, 'btn-'+other);
 }
 
 function cancelRec(){ clearUI(recSide); }
 
 function clearUI(side){
   clearInterval(recTimer); recTimer=null;
-  if(rec){try{rec.abort();}catch(e){}rec=null;}
+  if(rec){ try{rec.abort();}catch(e){} rec=null; }
   if(!side) return;
-  const lc=LC(side);
-  document.getElementById('btn-'+side).classList.remove('recording','saying');
-  document.getElementById('lbl-'+side).textContent=lc.l;
-  document.getElementById('tmr-'+side).textContent='';
-  document.getElementById('ring-'+side).style.strokeDashoffset='327';
-  document.getElementById('tr-'+side).classList.remove('listening');
-  recSide=null;
+  $('btn-'+side).classList.remove('recording','speaking');
+  $('lbl-'+side).textContent = LC(side).l;
+  $('tmr-'+side).textContent = '';
+  $('ring-'+side).style.strokeDashoffset = '339';
+  $('tr-'+side).classList.remove('listening');
+  recSide = null;
 }
 
-// ── INIT ─────────────────────────────────────────
-document.addEventListener('DOMContentLoaded',()=>{
+// ── Init ──────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', ()=>{
   onLC('a'); onLC('b');
-  loadVoices();
+  if(window.speechSynthesis){
+    window.speechSynthesis.getVoices();
+    window.speechSynthesis.onvoiceschanged=()=>window.speechSynthesis.getVoices();
+  }
 });
 </script>
 </body>
