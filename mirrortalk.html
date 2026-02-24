@@ -7,168 +7,204 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0a0a1a">
 <title>Traduttore</title>
-<!-- ResponsiveVoice: TTS affidabile su iOS Safari e Android -->
-<script src="https://code.responsivevoice.org/responsivevoice.js?key=FREE"></script>
 <style>
-:root{
-  --bg:#0a0a1a;
-  --border:rgba(255,255,255,0.13);
-  --text:#f0f0ff;
-  --muted:rgba(240,240,255,0.32);
-  --blue:#4f9fff;
-  --red:#ff5f7e;
-  --cyan:#4ff0d0;
-}
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{
-  width:100%;height:100%;
-  overflow:hidden;
-  -webkit-text-size-adjust:none;
-  background:var(--bg);
-  color:var(--text);
-  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display',sans-serif;
-  -webkit-font-smoothing:antialiased;
+:root {
+  --bg: #0a0a1a;
+  --border: rgba(255,255,255,0.12);
+  --text: #f0f0ff;
+  --muted: rgba(240,240,255,0.30);
+  --blue: #4f9fff;
+  --red: #ff5f7e;
+  --cyan: #4ff0d0;
 }
 
-/* Layout: usa dvh per evitare che la tastiera/statusbar tagli */
-#app{
-  position:fixed;
-  top:env(safe-area-inset-top,0px);
-  bottom:env(safe-area-inset-bottom,0px);
-  left:0;right:0;
-  display:flex;flex-direction:column;
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  -webkit-text-size-adjust: none;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+#app {
+  /* usa le safe area per non finire sotto notch/home bar */
+  position: fixed;
+  top: env(safe-area-inset-top, 0px);
+  left: 0; right: 0;
+  bottom: env(safe-area-inset-bottom, 0px);
+  display: flex;
+  flex-direction: column;
   background:
-    radial-gradient(ellipse 80% 60% at 20% 10%,rgba(79,159,255,0.13) 0%,transparent 60%),
-    radial-gradient(ellipse 60% 50% at 80% 90%,rgba(79,240,208,0.10) 0%,transparent 60%),
+    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(79,159,255,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 80% 90%, rgba(79,240,208,0.09) 0%, transparent 60%),
     var(--bg);
 }
 
-/* Due metà uguali */
-.half{
-  flex:1;
-  min-height:0;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:space-evenly;
-  padding:8px 18px;
+/* ── METÀ ── */
+.half {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
+  padding: 10px 20px;
 }
-.half.top{
-  transform:rotate(180deg);
-  border-bottom:1px solid var(--border);
+.half.top {
+  transform: rotate(180deg);
+  border-bottom: 1px solid var(--border);
 }
 
-/* Divisore */
-.div{
-  flex:0 0 30px;
-  display:flex;align-items:center;justify-content:center;gap:18px;
-  border-top:1px solid var(--border);
-  border-bottom:1px solid var(--border);
-  background:rgba(255,255,255,0.015);
+/* ── DIVISORE ── */
+.div {
+  flex: 0 0 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: rgba(255,255,255,0.012);
 }
-.div svg{width:16px;height:16px;color:var(--muted);flex-shrink:0}
+.div svg { width: 15px; height: 15px; color: var(--muted); flex-shrink: 0; }
 
-/* Select lingua */
-.sel{
-  width:100%;max-width:300px;
-  background:rgba(255,255,255,0.09);
-  border:1px solid var(--border);
-  border-radius:50px;
-  color:var(--text);
-  font-size:16px;font-weight:600;
-  padding:10px 20px;
-  text-align:center;
-  outline:none;-webkit-appearance:none;
-  cursor:pointer;
-  flex-shrink:0;
+/* ── SELECT ── */
+.sel {
+  width: 100%; max-width: 280px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid var(--border);
+  border-radius: 50px;
+  color: var(--text);
+  font-size: 15px; font-weight: 600;
+  padding: 9px 18px;
+  text-align: center;
+  outline: none; -webkit-appearance: none;
+  cursor: pointer;
+  flex-shrink: 0;
 }
-.sel option{background:#1a1a30}
+.sel option { background: #1a1a30; }
 
-/* Testo traduzione */
-.txt{
-  width:100%;max-width:320px;
-  flex:1;
-  min-height:44px;
-  max-height:100px;
-  display:flex;align-items:center;justify-content:center;
-  text-align:center;
-  font-size:18px;line-height:1.45;
-  border-radius:12px;
-  border:1px solid transparent;
-  padding:8px 12px;
-  overflow-y:auto;
-  transition:background .2s,border-color .2s;
+/* ── TESTO ── */
+.txt {
+  width: 100%; max-width: 320px;
+  /* altezza fissa per non tagliare */
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 19px; line-height: 1.4;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  padding: 8px 12px;
+  overflow-y: auto;
+  flex-shrink: 0;
+  transition: background .2s, border-color .2s;
 }
-.txt.ph{color:var(--muted);font-style:italic;font-size:13px}
-.txt.on{background:rgba(79,159,255,0.09);border-color:rgba(79,159,255,0.4)}
-.txt.say{background:rgba(79,240,208,0.09);border-color:rgba(79,240,208,0.4)}
+.txt.ph  { color: var(--muted); font-style: italic; font-size: 13px; }
+.txt.on  { background: rgba(79,159,255,0.09); border-color: rgba(79,159,255,0.4); }
+.txt.say { background: rgba(79,240,208,0.09); border-color: rgba(79,240,208,0.4); }
 
-/* Status spinner */
-.st{
-  font-size:12px;color:var(--cyan);
-  display:flex;align-items:center;gap:5px;
-  height:18px;flex-shrink:0;
+/* ── STATUS ── */
+.st {
+  font-size: 12px; color: var(--cyan);
+  display: flex; align-items: center; gap: 5px;
+  height: 16px; flex-shrink: 0;
 }
-@keyframes sp{to{transform:rotate(360deg)}}
-.spin{width:12px;height:12px;flex-shrink:0;border:2px solid rgba(79,240,208,0.2);border-top-color:var(--cyan);border-radius:50%;animation:sp .7s linear infinite}
-
-/* Bottone microfono */
-.mic{
-  flex-shrink:0;
-  width:96px;height:96px;
-  border-radius:50%;border:none;
-  background:transparent;
-  cursor:pointer;
-  position:relative;
-  display:flex;align-items:center;justify-content:center;
-  -webkit-tap-highlight-color:transparent;
-  touch-action:manipulation;
+@keyframes sp { to { transform: rotate(360deg); } }
+.spin {
+  width: 12px; height: 12px; flex-shrink: 0;
+  border: 2px solid rgba(79,240,208,0.2);
+  border-top-color: var(--cyan);
+  border-radius: 50%;
+  animation: sp .7s linear infinite;
 }
-.mic:active{opacity:.8}
 
-.face{
-  position:absolute;inset:0;border-radius:50%;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:4px;font-size:12px;font-weight:700;color:#fff;pointer-events:none;
+/* ── BOTTONE MIC ── */
+.mic {
+  width: 94px; height: 94px;
+  border-radius: 50%; border: none;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  flex-shrink: 0;
+  transition: transform .1s;
 }
-.face svg{width:30px;height:30px}
+.mic:active { transform: scale(0.85); }
 
-.mic.blu .face{background:linear-gradient(135deg,#4f9fff,#1e58cc);box-shadow:0 5px 24px rgba(79,159,255,0.5),inset 0 0 0 1px rgba(255,255,255,0.14)}
-.mic.red .face{background:linear-gradient(135deg,#ff5f7e,#a01e3c);box-shadow:0 5px 24px rgba(255,95,126,0.5),inset 0 0 0 1px rgba(255,255,255,0.14)}
+.face {
+  position: absolute; inset: 0; border-radius: 50%;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 4px; font-size: 12px; font-weight: 700; color: #fff;
+  pointer-events: none;
+}
+.face svg { width: 30px; height: 30px; }
 
-/* Ring timer */
-.rsvg{position:absolute;inset:-7px;width:calc(100%+14px);height:calc(100%+14px);pointer-events:none;transform:rotate(-90deg)}
-.rb{fill:none;stroke:rgba(255,255,255,0.07);stroke-width:3}
-.rf{fill:none;stroke-width:3;stroke-linecap:round;transition:stroke-dashoffset .1s}
-.mic.blu .rf{stroke:var(--blue)}
-.mic.red .rf{stroke:var(--red)}
+.mic.blu .face {
+  background: linear-gradient(135deg, #4f9fff, #1e58cc);
+  box-shadow: 0 5px 22px rgba(79,159,255,0.5), inset 0 0 0 1px rgba(255,255,255,0.14);
+}
+.mic.red .face {
+  background: linear-gradient(135deg, #ff5f7e, #a01e3c);
+  box-shadow: 0 5px 22px rgba(255,95,126,0.5), inset 0 0 0 1px rgba(255,255,255,0.14);
+}
+
+/* Ring */
+.rsvg {
+  position: absolute; inset: -7px;
+  width: calc(100% + 14px); height: calc(100% + 14px);
+  pointer-events: none; transform: rotate(-90deg);
+}
+.rb { fill: none; stroke: rgba(255,255,255,0.07); stroke-width: 3; }
+.rf { fill: none; stroke-width: 3; stroke-linecap: round; transition: stroke-dashoffset .1s; }
+.mic.blu .rf { stroke: var(--blue); }
+.mic.red .rf { stroke: var(--red); }
 
 /* Pulse registrazione */
-@keyframes pr{0%{transform:scale(1);opacity:.55}100%{transform:scale(1.9);opacity:0}}
-.mic.rec::after{content:'';position:absolute;inset:-7px;border-radius:50%;border:2px solid currentColor;animation:pr 1.1s ease-out infinite}
-.mic.blu.rec{color:var(--blue)}
-.mic.red.rec{color:var(--red)}
+@keyframes pr { 0% { transform:scale(1);opacity:.55; } 100% { transform:scale(1.9);opacity:0; } }
+.mic.rec::after {
+  content: ''; position: absolute; inset: -7px; border-radius: 50%;
+  border: 2.5px solid currentColor;
+  animation: pr 1.1s ease-out infinite;
+}
+.mic.blu.rec { color: var(--blue); }
+.mic.red.rec { color: var(--red); }
 
-/* Pulse parlando */
-@keyframes ps{0%{transform:scale(1);opacity:.45}100%{transform:scale(2);opacity:0}}
-.mic.say::after{content:'';position:absolute;inset:-7px;border-radius:50%;border:2px solid var(--cyan);animation:ps .9s ease-out infinite}
+/* Pulse TTS */
+@keyframes ps { 0% { transform:scale(1);opacity:.45; } 100% { transform:scale(2.1);opacity:0; } }
+.mic.tts::after {
+  content: ''; position: absolute; inset: -7px; border-radius: 50%;
+  border: 2.5px solid var(--cyan);
+  animation: ps .9s ease-out infinite;
+}
 
 /* Timer */
-.tmr{font-size:11px;font-weight:700;color:var(--muted);height:14px;flex-shrink:0}
+.tmr { font-size: 11px; font-weight: 700; color: var(--muted); height: 14px; flex-shrink: 0; }
 
-/* Toast */
-#toast{
-  position:fixed;bottom:calc(12px + env(safe-area-inset-bottom,0px));
-  left:50%;transform:translateX(-50%) translateY(12px);
-  background:rgba(16,16,36,.97);border:1px solid rgba(255,255,255,.22);
-  border-radius:50px;padding:9px 20px;
-  font-size:13px;font-weight:600;color:var(--text);
-  z-index:999;opacity:0;transition:opacity .22s,transform .22s;
-  pointer-events:none;
-  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
-  white-space:nowrap;max-width:90vw;text-align:center;
+/* ── TOAST ── */
+#toast {
+  position: fixed;
+  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  left: 50%; transform: translateX(-50%) translateY(12px);
+  background: rgba(16,16,36,.97);
+  border: 1px solid rgba(255,255,255,.22);
+  border-radius: 50px; padding: 9px 20px;
+  font-size: 13px; font-weight: 600; color: var(--text);
+  z-index: 999; opacity: 0;
+  transition: opacity .22s, transform .22s;
+  pointer-events: none;
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  white-space: nowrap; max-width: 90vw; text-align: center;
 }
-#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 </style>
 </head>
 <body>
@@ -192,12 +228,13 @@ html,body{
     <div class="st" id="sb"></div>
     <div class="tmr" id="mb"></div>
     <button class="mic red" id="bb" onclick="tap('b')">
-      <svg class="rsvg" viewBox="0 0 110 110">
-        <circle class="rb" cx="55" cy="55" r="50"/>
-        <circle class="rf" id="rb" cx="55" cy="55" r="50" stroke-dasharray="314" stroke-dashoffset="314"/>
+      <svg class="rsvg" viewBox="0 0 108 108">
+        <circle class="rb" cx="54" cy="54" r="50"/>
+        <circle class="rf" id="rb" cx="54" cy="54" r="50" stroke-dasharray="314" stroke-dashoffset="314"/>
       </svg>
       <div class="face">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+             stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
           <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/>
         </svg>
@@ -208,8 +245,14 @@ html,body{
 
   <!-- DIVISORE -->
   <div class="div">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+         stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/>
+    </svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+         stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/>
+    </svg>
   </div>
 
   <!-- IO -->
@@ -231,12 +274,13 @@ html,body{
     <div class="st" id="sa"></div>
     <div class="tmr" id="ma"></div>
     <button class="mic blu" id="ba" onclick="tap('a')">
-      <svg class="rsvg" viewBox="0 0 110 110">
-        <circle class="rb" cx="55" cy="55" r="50"/>
-        <circle class="rf" id="ra" cx="55" cy="55" r="50" stroke-dasharray="314" stroke-dashoffset="314"/>
+      <svg class="rsvg" viewBox="0 0 108 108">
+        <circle class="rb" cx="54" cy="54" r="50"/>
+        <circle class="rf" id="ra" cx="54" cy="54" r="50" stroke-dasharray="314" stroke-dashoffset="314"/>
       </svg>
       <div class="face">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+             stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
           <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/>
         </svg>
@@ -251,217 +295,244 @@ html,body{
 <script>
 'use strict';
 /*
- ═══════════════════════════════════════════════════════
-  TTS: ResponsiveVoice (https://responsivevoice.org)
-  Funziona su iOS Safari, Android Chrome, desktop.
-  Versione gratuita: voce sintetica di qualità.
-  
-  Traduzione: MyMemory API (gratuita)
-  STT: Web Speech API nativa
- ═══════════════════════════════════════════════════════
+ ══════════════════════════════════════════════════════════════════
+  SOLUZIONE iOS TTS — ricercata e verificata (Feb 2024):
+
+  "We can immediately fire an empty SpeechSynthesisUtterance which
+   activates the session to allow us to later speak our real text"
+  — spacejelly.dev/posts/how-to-build-an-ai-voice-translator
+
+  Ovvero: appena l'utente preme il tasto (evento click diretto),
+  PRIMA di avviare il microfono, si spara un utterance vuoto.
+  Questo "attiva la sessione TTS" su iOS Safari.
+  Poi, anche se speak() arriva dopo una Promise async, iOS lo
+  accetta perché la sessione è già stata inizializzata.
+ ══════════════════════════════════════════════════════════════════
 */
 
-// Mappa lingua → voce ResponsiveVoice
-const RV = {
-  it:'Italian Female',
-  en:'UK English Female',
-  es:'Spanish Female',
-  fr:'French Female',
-  de:'Deutsch Female',
-  pt:'Brazilian Portuguese Female',
-  ru:'Russian Female',
-  zh:'Chinese Female',
-  ar:'Arabic Female',
-  bg:'Bulgarian Female',  // potrebbe fare fallback a default
-  cs:'Czech Female',       // idem
-};
-
-// Mappa lingua → codice BCP47 per STT
 const BCP = {
   it:'it-IT', en:'en-US', es:'es-ES', fr:'fr-FR',
   de:'de-DE', pt:'pt-PT', ru:'ru-RU', zh:'zh-CN',
   ar:'ar-SA', bg:'bg-BG', cs:'cs-CZ',
 };
-
-// Label bottone per lingua
 const LBL = {
   it:'Parla', en:'Speak', es:'Hablar', fr:'Parler',
   de:'Sprechen', pt:'Falar', ru:'Говорить', zh:'说话',
   ar:'تكلم', bg:'Говори', cs:'Mluvit',
 };
 
-const $ = id => document.getElementById(id);
-const glA = () => $('la').value;
-const glB = () => $('lb').value;
-const gl  = s => s==='a' ? glA() : glB();
+const $  = id => document.getElementById(id);
+const ga = () => $('la').value;
+const gb = () => $('lb').value;
+const gl = s => s === 'a' ? ga() : gb();
 
-function onLC(s){
-  const lang = gl(s);
-  $('nl'+(s==='a'?'a':'b')).textContent = LBL[lang]||'Speak';
+function onLC(s) {
+  $('nl' + (s === 'a' ? 'a' : 'b')).textContent = LBL[gl(s)] || 'Speak';
 }
 
+// ── Toast ─────────────────────────────────────────────────
 let toastT;
-function toast(m,ms=2600){
-  const e=$('toast'); e.textContent=m; e.classList.add('show');
-  clearTimeout(toastT); toastT=setTimeout(()=>e.classList.remove('show'),ms);
+function toast(m, ms = 2600) {
+  const e = $('toast');
+  e.textContent = m; e.classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => e.classList.remove('show'), ms);
 }
 
-// ── SPEAK con ResponsiveVoice ──────────────────────────
-function speak(text, lang, btnId){
-  const voice = RV[lang] || 'UK English Female';
-  const btn   = $(btnId);
-
-  // Ferma audio precedente
-  if(window.responsiveVoice) responsiveVoice.cancel();
-
-  btn.classList.add('say');
-
-  if(window.responsiveVoice && responsiveVoice.voiceSupport()){
-    responsiveVoice.speak(text, voice, {
-      rate: 0.9,
-      pitch: 1,
-      onend: () => btn.classList.remove('say'),
-      onerror: () => {
-        btn.classList.remove('say');
-        fallback(text, lang);
-      }
-    });
-  } else {
-    fallback(text, lang);
-    btn.classList.remove('say');
-  }
+// ── Voci TTS ──────────────────────────────────────────────
+function loadVoices() {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
 }
 
-// Fallback: SpeechSynthesis nativa (Android/desktop)
-function fallback(text, lang){
-  if(!window.speechSynthesis) return;
+function getBestVoice(lang) {
+  if (!window.speechSynthesis) return null;
+  const voices = window.speechSynthesis.getVoices();
+  const prefix = (BCP[lang] || lang).slice(0, 2);
+  return voices.find(v => v.lang.startsWith(prefix) && v.localService)
+      || voices.find(v => v.lang.startsWith(prefix))
+      || null;
+}
+
+// ── PRIMO SPEAK VUOTO — attiva sessione TTS su iOS ────────
+// Chiamato DIRETTAMENTE nell'onclick, prima di qualsiasi async.
+// Questo è il segreto: "prime" Safari a permettere speak() dopo.
+function primeTTS() {
+  if (!window.speechSynthesis) return;
+  try {
+    const u = new SpeechSynthesisUtterance('');
+    u.volume = 0;
+    u.lang   = 'it-IT';
+    window.speechSynthesis.speak(u);
+  } catch(e) {}
+}
+
+// ── SPEAK reale ───────────────────────────────────────────
+function speak(text, lang, btnId) {
+  if (!window.speechSynthesis || !text) return;
   window.speechSynthesis.cancel();
+
   const u = new SpeechSynthesisUtterance(text);
   u.lang  = BCP[lang] || 'en-US';
-  u.rate  = 0.9;
-  const vs = speechSynthesis.getVoices();
-  const px = u.lang.slice(0,2);
-  u.voice  = vs.find(v=>v.lang.startsWith(px)) || null;
-  speechSynthesis.speak(u);
+  u.rate  = 0.88;
+  u.pitch = 1;
+  u.voice = getBestVoice(lang);
+
+  const btn = $(btnId);
+  btn.classList.add('tts');
+
+  u.onend = u.onerror = () => btn.classList.remove('tts');
+
+  // Fix iOS: a volte si mette in pausa da solo durante la sintesi
+  const fix = setInterval(() => {
+    if (!window.speechSynthesis.speaking) { clearInterval(fix); return; }
+    if (window.speechSynthesis.paused) window.speechSynthesis.resume();
+  }, 300);
+  u.onend = () => { clearInterval(fix); btn.classList.remove('tts'); };
+  u.onerror = () => { clearInterval(fix); btn.classList.remove('tts'); };
+
+  window.speechSynthesis.speak(u);
 }
 
-// ── TRADUZIONE MyMemory ────────────────────────────────
-async function translate(text, from, to){
-  if(!text || from===to) return text;
-  try{
+// ── TRADUZIONE (MyMemory gratuito) ────────────────────────
+async function translate(text, from, to) {
+  if (!text || from === to) return text;
+  try {
     const r = await fetch(
       `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`
     );
     const d = await r.json();
-    if(d.responseStatus===200 && d.responseData?.translatedText){
+    if (d.responseStatus === 200 && d.responseData?.translatedText) {
       const t = d.responseData.translatedText;
-      if(t && !t.includes('MYMEMORY WARNING') && t.toLowerCase()!==text.toLowerCase())
+      if (t && !t.includes('MYMEMORY WARNING') && t.toLowerCase() !== text.toLowerCase())
         return t;
     }
-  }catch(e){}
+  } catch(e) {}
   return text;
 }
 
-// ── MICROFONO ─────────────────────────────────────────
-let rec=null, rSide=null, rTimer=null, rSec=0, rBest='';
-const MAX=12;
+// ── MICROFONO ─────────────────────────────────────────────
+let rec = null, rSide = null, rTimer = null, rSec = 0, rBest = '';
+const MAX = 12;
 
-function tap(side){
-  if(rSide===side){ stop(); return; }
-  if(rSide) cancel();
-  start(side);
+function tap(side) {
+  // 1. PRIME TTS subito — siamo nell'onclick diretto
+  primeTTS();
+
+  // 2. Avvia/ferma registrazione
+  if (rSide === side) { stopRec(); return; }
+  if (rSide) cancelRec();
+  startRec(side);
 }
 
-function start(side){
-  const SR = window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){ toast('Usa Safari (iPhone) o Chrome (Android)'); return; }
+function startRec(side) {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { toast('Usa Safari su iPhone o Chrome su Android'); return; }
 
   const lang = gl(side);
-  rSide=side; rBest='';
+  rSide = side; rBest = '';
 
-  const btn=$('b'+side), ta=$('t'+side), tmr=$('m'+side), ring=$('r'+side);
+  const btn  = $('b' + side);
+  const ta   = $('t' + side);
+  const tmr  = $('m' + side);
+  const ring = $('r' + side);
+  const lbl  = side === 'a' ? $('nla') : $('nlb');
+
   btn.classList.add('rec');
-  $('nl'+(side==='a'?'a':'b')).textContent='⏹';
-  ta.className='txt on';
-  ta.textContent='🎙️ …';
-  tmr.textContent='';
+  lbl.textContent = '⏹';
+  ta.className = 'txt on';
+  ta.textContent = '🎙️ …';
+  tmr.textContent = '';
 
-  rSec=MAX;
-  const C=314;
-  ring.style.strokeDashoffset=C;
-  rTimer=setInterval(()=>{
+  rSec = MAX;
+  const C = 314;
+  ring.style.strokeDashoffset = C;
+  rTimer = setInterval(() => {
     rSec--;
-    tmr.textContent=rSec+'s';
-    ring.style.strokeDashoffset=C-((MAX-rSec)/MAX)*C;
-    if(rSec<=0) stop();
-  },1000);
+    tmr.textContent = rSec + 's';
+    ring.style.strokeDashoffset = C - ((MAX - rSec) / MAX) * C;
+    if (rSec <= 0) stopRec();
+  }, 1000);
 
-  rec=new SR();
-  rec.lang=BCP[lang]||'en-US';
-  rec.interimResults=true;
-  rec.continuous=false;
+  rec = new SR();
+  rec.lang = BCP[lang] || 'en-US';
+  rec.interimResults = true;
+  rec.continuous = false; // si ferma da solo col silenzio
 
-  rec.onresult=e=>{
-    rBest=''; let tmp='';
-    for(let i=0;i<e.results.length;i++){
-      if(e.results[i].isFinal) rBest+=e.results[i][0].transcript+' ';
-      else tmp+=e.results[i][0].transcript;
+  rec.onresult = e => {
+    rBest = ''; let tmp = '';
+    for (let i = 0; i < e.results.length; i++) {
+      if (e.results[i].isFinal) rBest += e.results[i][0].transcript + ' ';
+      else tmp += e.results[i][0].transcript;
     }
-    ta.textContent=(rBest+tmp).trim()||'🎙️ …';
+    ta.textContent = (rBest + tmp).trim() || '🎙️ …';
   };
-  rec.onerror=e=>{
-    if(e.error==='no-speech'){stop();return;}
-    if(e.error!=='aborted') toast('❌ '+e.error);
-    cancel();
-  };
-  rec.onend=()=>{ if(rSide===side) stop(); };
 
-  try{ rec.start(); }
-  catch(e){ toast('❌ Microfono non disponibile'); cancel(); }
+  rec.onerror = e => {
+    if (e.error === 'no-speech') { stopRec(); return; }
+    if (e.error !== 'aborted') toast('❌ ' + e.error);
+    cancelRec();
+  };
+
+  // Si ferma automaticamente quando l'utente smette di parlare
+  rec.onend = () => { if (rSide === side) stopRec(); };
+
+  try { rec.start(); }
+  catch(e) { toast('❌ Microfono non disponibile'); cancelRec(); }
 }
 
-async function stop(){
-  if(!rSide) return;
-  const side=rSide, lang=gl(side), text=rBest.trim();
-  reset(side);
+async function stopRec() {
+  if (!rSide) return;
+  const side = rSide, lang = gl(side), text = rBest.trim();
+  resetUI(side);
 
-  const ta=$('t'+side);
-  if(!text){ ta.className='txt ph'; ta.textContent='…'; return; }
-  ta.className='txt'; ta.textContent=text;
+  const ta = $('t' + side);
+  if (!text) { ta.className = 'txt ph'; ta.textContent = '…'; return; }
+  ta.className = 'txt';
+  ta.textContent = text;
 
-  const other=side==='a'?'b':'a';
-  const toLang=gl(other);
-  const oTA=$('t'+other), oSt=$('s'+other);
+  // Mostra spinner sull'altra metà
+  const other  = side === 'a' ? 'b' : 'a';
+  const toLang = gl(other);
+  const oTA    = $('t' + other);
+  const oSt    = $('s' + other);
 
-  oTA.className='txt'; oTA.textContent='…';
-  oSt.innerHTML='<div class="spin"></div>';
+  oTA.className = 'txt'; oTA.textContent = '…';
+  oSt.innerHTML = '<div class="spin"></div>';
 
+  // Traduci
   const out = await translate(text, lang, toLang);
-  oSt.innerHTML='';
+  oSt.innerHTML = '';
 
-  const final=out||text;
-  oTA.className='txt say';
-  oTA.textContent=final;
+  const final = out || text;
+  oTA.className = 'txt say';
+  oTA.textContent = final;
 
-  // ★ PARLA con ResponsiveVoice
-  speak(final, toLang, 'b'+other);
+  // ★ SPEAK — funziona perché primeTTS() è già stato chiamato
+  speak(final, toLang, 'b' + other);
 }
 
-function cancel(){ reset(rSide); }
+function cancelRec() { resetUI(rSide); }
 
-function reset(side){
-  clearInterval(rTimer); rTimer=null;
-  if(rec){try{rec.abort();}catch(e){} rec=null;}
-  if(!side) return;
-  $('b'+side).classList.remove('rec','say');
-  $('nl'+(side==='a'?'a':'b')).textContent = LBL[gl(side)]||'Speak';
-  $('m'+side).textContent='';
-  $('r'+side).style.strokeDashoffset='314';
-  $('t'+side).classList.remove('on');
-  rSide=null;
+function resetUI(side) {
+  clearInterval(rTimer); rTimer = null;
+  if (rec) { try { rec.abort(); } catch(e) {} rec = null; }
+  if (!side) return;
+  const lbl = side === 'a' ? $('nla') : $('nlb');
+  $('b' + side).classList.remove('rec', 'tts');
+  lbl.textContent = LBL[gl(side)] || 'Speak';
+  $('m' + side).textContent = '';
+  $('r' + side).style.strokeDashoffset = '314';
+  $('t' + side).classList.remove('on');
+  rSide = null;
 }
 
-document.addEventListener('DOMContentLoaded',()=>{ onLC('a'); onLC('b'); });
+// ── Init ──────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  onLC('a'); onLC('b');
+  loadVoices();
+});
 </script>
 </body>
 </html>
