@@ -7,437 +7,518 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MirrorTalk">
 <meta name="theme-color" content="#0a0a1a">
-<title>MirrorTalk & Learn</title>
+<title>MirrorTalk — Traduttore</title>
 <style>
-:root{--bg-dark:#0a0a1a;--bg-card:rgba(255,255,255,0.06);--bg-card-hover:rgba(255,255,255,0.10);--border:rgba(255,255,255,0.12);--border-glow:rgba(255,255,255,0.25);--text-primary:#f0f0ff;--text-secondary:rgba(240,240,255,0.55);--text-muted:rgba(240,240,255,0.3);--accent-blue:#4f9fff;--accent-red:#ff5f7e;--accent-cyan:#4ff0d0;--accent-yellow:#ffd166;--tab-h:72px;--safe-bottom:env(safe-area-inset-bottom,0px);--safe-top:env(safe-area-inset-top,0px);--radius:20px;--radius-sm:12px}
+:root{
+  --bg-dark:#0a0a1a;
+  --bg-card:rgba(255,255,255,0.06);
+  --border:rgba(255,255,255,0.12);
+  --border-glow:rgba(255,255,255,0.25);
+  --text-primary:#f0f0ff;
+  --text-secondary:rgba(240,240,255,0.55);
+  --text-muted:rgba(240,240,255,0.3);
+  --accent-blue:#4f9fff;
+  --accent-red:#ff5f7e;
+  --accent-cyan:#4ff0d0;
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+  --safe-top:env(safe-area-inset-top,0px);
+}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{width:100%;height:100%;overflow:hidden;touch-action:none;-webkit-text-size-adjust:none;background:var(--bg-dark);color:var(--text-primary);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text',sans-serif;-webkit-font-smoothing:antialiased}
-#app{position:fixed;inset:0;display:flex;flex-direction:column;padding-top:var(--safe-top);background:radial-gradient(ellipse 80% 60% at 20% 10%,rgba(79,159,255,0.12) 0%,transparent 60%),radial-gradient(ellipse 60% 50% at 80% 90%,rgba(79,240,208,0.10) 0%,transparent 60%),var(--bg-dark)}
-#content{flex:1;overflow:hidden;position:relative}
-.tab-panel{position:absolute;inset:0;display:none;overflow:hidden}
-.tab-panel.active{display:flex;flex-direction:column}
-#tabbar{flex-shrink:0;height:calc(var(--tab-h) + var(--safe-bottom));padding-bottom:var(--safe-bottom);display:flex;align-items:stretch;background:rgba(10,10,26,0.9);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-top:1px solid var(--border);z-index:100}
-.tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;background:none;border:none;color:var(--text-muted);font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;transition:color .2s,transform .15s;-webkit-tap-highlight-color:transparent;padding:8px 0}
-.tab-btn svg{width:24px;height:24px;transition:transform .2s,filter .2s}
-.tab-btn.active{color:var(--text-primary)}
-.tab-btn.active svg{filter:drop-shadow(0 0 8px currentColor);transform:scale(1.15)}
-.tab-btn:active{transform:scale(0.92)}
-.tab-indicator{width:4px;height:4px;border-radius:50%;margin-top:-2px;transition:background .2s,box-shadow .2s}
-.tab-btn.active .tab-indicator{background:currentColor;box-shadow:0 0 6px currentColor}
+html,body{
+  width:100%;height:100%;overflow:hidden;
+  touch-action:none;-webkit-text-size-adjust:none;
+  background:var(--bg-dark);color:var(--text-primary);
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text',sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+#app{
+  position:fixed;inset:0;
+  display:flex;flex-direction:column;
+  padding-top:var(--safe-top);
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 10%,rgba(79,159,255,0.12) 0%,transparent 60%),
+    radial-gradient(ellipse 60% 50% at 80% 90%,rgba(79,240,208,0.10) 0%,transparent 60%),
+    var(--bg-dark);
+}
+
+/* HEADER */
+.app-header{
+  flex-shrink:0;padding:12px 20px 8px;text-align:center;
+  border-bottom:1px solid var(--border);
+}
+.app-header h1{
+  font-size:19px;font-weight:800;letter-spacing:-.02em;
+  background:linear-gradient(90deg,var(--text-primary),var(--accent-cyan));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.app-header p{font-size:10px;color:var(--text-muted);margin-top:2px}
+.ai-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  margin-top:5px;padding:3px 12px;border-radius:50px;
+  background:rgba(79,240,208,0.08);border:1px solid rgba(79,240,208,0.2);
+  font-size:9px;font-weight:700;letter-spacing:.06em;color:var(--accent-cyan);
+}
+
 /* MIRROR */
-#tab-mirror{flex-direction:column}
-.mirror-half{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 16px;gap:10px;position:relative;overflow:hidden}
-.mirror-half.top{transform:rotate(180deg);border-bottom:1px solid var(--border)}
-.mirror-label{position:absolute;top:8px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--text-muted);text-transform:uppercase}
-.mirror-half.top .mirror-label{top:auto;bottom:8px}
-.lang-select{background:rgba(255,255,255,0.08);border:1px solid var(--border);border-radius:50px;color:var(--text-primary);font-size:14px;font-weight:600;padding:8px 18px;outline:none;-webkit-appearance:none;cursor:pointer;min-width:175px;text-align:center;transition:border-color .2s}
+#mirror{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+.mirror-half{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:12px 16px;gap:9px;
+  position:relative;overflow:hidden;
+}
+.mirror-half.top{
+  transform:rotate(180deg);
+  border-bottom:1px solid var(--border);
+}
+.side-label{
+  position:absolute;top:6px;left:50%;transform:translateX(-50%);
+  font-size:9px;font-weight:700;letter-spacing:.12em;
+  color:var(--text-muted);text-transform:uppercase;
+}
+.mirror-half.top .side-label{top:auto;bottom:6px}
+
+.lang-select{
+  background:rgba(255,255,255,0.08);border:1px solid var(--border);
+  border-radius:50px;color:var(--text-primary);
+  font-size:14px;font-weight:600;padding:8px 18px;
+  outline:none;-webkit-appearance:none;cursor:pointer;
+  min-width:185px;text-align:center;transition:border-color .2s;
+}
 .lang-select option{background:#1a1a30}
-.transcript-area{width:100%;flex:1;display:flex;align-items:center;justify-content:center;text-align:center;padding:10px;font-size:17px;line-height:1.5;color:var(--text-primary);min-height:52px;max-height:110px;overflow-y:auto;border-radius:12px;border:1px solid transparent;transition:background .3s,border-color .3s}
+.lang-select:focus{border-color:var(--border-glow)}
+
+.transcript-area{
+  width:100%;flex:1;
+  display:flex;align-items:center;justify-content:center;
+  text-align:center;padding:10px;
+  font-size:16px;line-height:1.5;color:var(--text-primary);
+  min-height:48px;max-height:110px;
+  overflow-y:auto;border-radius:12px;
+  border:1px solid transparent;
+  transition:background .3s,border-color .3s;
+}
 .transcript-area.placeholder{color:var(--text-muted);font-style:italic;font-size:13px}
-.transcript-area.listening{background:rgba(79,159,255,0.08);border-color:rgba(79,159,255,0.25)}
-.speak-btn-wrap{position:relative;display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0}
-.mic-timer{font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.05em;min-height:14px}
-.speak-btn{width:76px;height:76px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative;transition:transform .15s;-webkit-tap-highlight-color:transparent}
+.transcript-area.listening{background:rgba(79,159,255,0.08);border-color:rgba(79,159,255,0.3)}
+.transcript-area.speaking{background:rgba(79,240,208,0.08);border-color:rgba(79,240,208,0.3)}
+
+.translate-status{
+  font-size:12px;color:var(--accent-cyan);
+  display:flex;align-items:center;gap:5px;min-height:16px;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{
+  width:11px;height:11px;
+  border:2px solid rgba(79,240,208,0.3);
+  border-top-color:var(--accent-cyan);
+  border-radius:50%;animation:spin .8s linear infinite;
+}
+
+.speak-btn-wrap{
+  position:relative;display:flex;flex-direction:column;
+  align-items:center;gap:5px;flex-shrink:0;
+}
+.mic-timer{
+  font-size:11px;font-weight:700;
+  color:var(--text-muted);letter-spacing:.05em;min-height:14px;
+}
+.speak-btn{
+  width:78px;height:78px;border-radius:50%;border:none;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  position:relative;transition:transform .15s;
+  -webkit-tap-highlight-color:transparent;
+}
 .speak-btn:active{transform:scale(0.88)}
-.speak-btn .btn-inner{width:100%;height:100%;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px;font-size:11px;font-weight:700;color:white}
+.speak-btn .btn-inner{
+  width:100%;height:100%;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:3px;font-size:11px;font-weight:700;color:white;
+}
 .speak-btn .btn-icon{width:26px;height:26px}
-.btn-a .btn-inner{background:linear-gradient(135deg,#4f9fff,#2d6bdd);box-shadow:0 4px 20px rgba(79,159,255,0.5),inset 0 0 0 1px rgba(255,255,255,0.15)}
-.btn-b .btn-inner{background:linear-gradient(135deg,#ff5f7e,#c03050);box-shadow:0 4px 20px rgba(255,95,126,0.5),inset 0 0 0 1px rgba(255,255,255,0.15)}
-.ring-svg{position:absolute;inset:-6px;width:calc(100% + 12px);height:calc(100% + 12px);pointer-events:none;transform:rotate(-90deg)}
+.btn-a .btn-inner{
+  background:linear-gradient(135deg,#4f9fff,#2d6bdd);
+  box-shadow:0 4px 20px rgba(79,159,255,0.5),inset 0 0 0 1px rgba(255,255,255,0.15);
+}
+.btn-b .btn-inner{
+  background:linear-gradient(135deg,#ff5f7e,#c03050);
+  box-shadow:0 4px 20px rgba(255,95,126,0.5),inset 0 0 0 1px rgba(255,255,255,0.15);
+}
+.ring-svg{
+  position:absolute;inset:-6px;
+  width:calc(100% + 12px);height:calc(100% + 12px);
+  pointer-events:none;transform:rotate(-90deg);
+}
 .ring-bg{fill:none;stroke:rgba(255,255,255,0.08);stroke-width:3}
 .ring-fill{fill:none;stroke-width:3;stroke-linecap:round;transition:stroke-dashoffset .1s linear}
 .btn-a .ring-fill{stroke:#4f9fff}
 .btn-b .ring-fill{stroke:#ff5f7e}
 @keyframes pulse-ring{0%{transform:scale(1);opacity:.7}100%{transform:scale(1.7);opacity:0}}
-.speak-btn.recording::after{content:'';position:absolute;inset:-6px;border-radius:50%;border:2px solid currentColor;animation:pulse-ring 1.2s ease-out infinite}
+.speak-btn.recording::after{
+  content:'';position:absolute;inset:-6px;border-radius:50%;
+  border:2px solid currentColor;animation:pulse-ring 1.2s ease-out infinite;
+}
 .btn-a.recording{color:var(--accent-blue)}
 .btn-b.recording{color:var(--accent-red)}
-.translate-status{font-size:12px;color:var(--accent-cyan);display:flex;align-items:center;gap:5px;min-height:16px}
-@keyframes spin{to{transform:rotate(360deg)}}
-.spinner{width:11px;height:11px;border:2px solid rgba(79,240,208,0.3);border-top-color:var(--accent-cyan);border-radius:50%;animation:spin .8s linear infinite}
-/* ACADEMY */
-#tab-academy{overflow:hidden}
-.academy-header{padding:18px 20px 10px;flex-shrink:0}
-.academy-header h1{font-size:26px;font-weight:800;background:linear-gradient(90deg,var(--text-primary),var(--accent-cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.academy-header p{font-size:13px;color:var(--text-secondary);margin-top:3px}
-.lang-tabs{display:flex;gap:8px;padding:0 20px 10px;flex-shrink:0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-.lang-tabs::-webkit-scrollbar{display:none}
-.lang-tab{flex-shrink:0;padding:7px 16px;border-radius:50px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-secondary);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent}
-.lang-tab.active{color:white;border-color:transparent}
-.lang-tab[data-lang="IT"].active{background:linear-gradient(135deg,#4fcfff,#2290cc);box-shadow:0 4px 16px rgba(79,207,255,0.4)}
-.lang-tab[data-lang="EN"].active{background:linear-gradient(135deg,#4f9fff,#2d6bdd);box-shadow:0 4px 16px rgba(79,159,255,0.4)}
-.lang-tab[data-lang="ES"].active{background:linear-gradient(135deg,#ff5f7e,#c03050);box-shadow:0 4px 16px rgba(255,95,126,0.4)}
-.lang-tab[data-lang="FR"].active{background:linear-gradient(135deg,#ffd166,#e0922a);box-shadow:0 4px 16px rgba(255,209,102,0.4);color:#1a1a00}
-.lang-tab[data-lang="ZH"].active{background:linear-gradient(135deg,#ff9a3c,#e05c00);box-shadow:0 4px 16px rgba(255,154,60,0.4)}
-.modules-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 14px calc(16px + var(--safe-bottom));scrollbar-width:none}
-.modules-scroll::-webkit-scrollbar{display:none}
-.module-section{margin-bottom:18px}
-.module-title{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;padding-left:4px}
-.lesson-card{display:flex;align-items:center;gap:12px;padding:13px 14px;margin-bottom:7px;border-radius:var(--radius-sm);background:var(--bg-card);border:1px solid var(--border);cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent}
-.lesson-card:active{transform:scale(0.98);background:var(--bg-card-hover)}
-.lesson-num{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0}
-.lesson-num.done{background:rgba(79,240,208,0.15);color:var(--accent-cyan)}
-.lesson-num.open{background:rgba(79,159,255,0.2);color:var(--accent-blue)}
-.lesson-info{flex:1;min-width:0}
-.lesson-title{font-size:14px;font-weight:600;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.progress-bar{height:3px;border-radius:2px;background:rgba(255,255,255,0.08);overflow:hidden}
-.progress-fill{height:100%;border-radius:2px;transition:width .5s ease}
-.lesson-pct{font-size:11px;color:var(--text-muted);flex-shrink:0}
-/* COACH */
-#tab-coach{overflow:hidden}
-.coach-header{padding:16px 20px 12px;flex-shrink:0;border-bottom:1px solid var(--border)}
-.coach-scenario-title{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-cyan);margin-bottom:3px}
-.coach-title{font-size:21px;font-weight:800;background:linear-gradient(90deg,#fff,var(--accent-blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.scenario-pills{display:flex;gap:8px;padding:10px 20px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;flex-shrink:0}
-.scenario-pills::-webkit-scrollbar{display:none}
-.pill{flex-shrink:0;padding:6px 13px;border-radius:50px;border:1px solid var(--border);background:var(--bg-card);font-size:12px;font-weight:600;color:var(--text-secondary);cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent}
-.pill.active{background:linear-gradient(135deg,rgba(79,159,255,0.25),rgba(79,240,208,0.15));border-color:rgba(79,159,255,0.5);color:var(--text-primary)}
-.chat-messages{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 14px 8px;display:flex;flex-direction:column;gap:10px;scrollbar-width:none}
-.chat-messages::-webkit-scrollbar{display:none}
-.msg{max-width:82%;padding:11px 15px;border-radius:18px;font-size:15px;line-height:1.5;animation:msgIn .3s ease}
-@keyframes msgIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-.msg.ai{background:linear-gradient(135deg,rgba(79,159,255,0.15),rgba(79,240,208,0.10));border:1px solid rgba(79,159,255,0.25);border-bottom-left-radius:4px;align-self:flex-start}
-.msg.user{background:linear-gradient(135deg,rgba(255,255,255,0.10),rgba(255,255,255,0.07));border:1px solid var(--border);border-bottom-right-radius:4px;align-self:flex-end}
-.msg .correction{font-size:12px;color:var(--accent-yellow);margin-top:6px;font-style:italic;padding-top:6px;border-top:1px solid rgba(255,209,102,0.2)}
-.msg .speaker{font-size:10px;font-weight:700;letter-spacing:.06em;margin-bottom:4px;color:var(--accent-cyan)}
-.msg.user .speaker{color:var(--text-muted)}
-.typing-indicator{display:flex;gap:4px;align-items:center;padding:13px 15px;background:linear-gradient(135deg,rgba(79,159,255,0.10),rgba(79,240,208,0.07));border:1px solid rgba(79,159,255,0.2);border-radius:18px;border-bottom-left-radius:4px;align-self:flex-start}
-.typing-dot{width:6px;height:6px;border-radius:50%;background:var(--accent-blue);animation:bounce 1.2s ease-in-out infinite}
-.typing-dot:nth-child(2){animation-delay:.2s}
-.typing-dot:nth-child(3){animation-delay:.4s}
-@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
-.coach-input-area{flex-shrink:0;padding:10px 14px;padding-bottom:calc(10px + var(--safe-bottom));border-top:1px solid var(--border);display:flex;align-items:center;gap:10px}
-.coach-lang-select{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;color:var(--text-primary);font-size:13px;font-weight:600;padding:9px 10px;outline:none;-webkit-appearance:none;cursor:pointer;flex-shrink:0}
-.coach-lang-select option{background:#1a1a30}
-.coach-voice-btn{width:52px;height:52px;border-radius:50%;border:none;cursor:pointer;background:linear-gradient(135deg,#4f9fff,#4ff0d0);box-shadow:0 4px 16px rgba(79,159,255,0.5);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform .15s;-webkit-tap-highlight-color:transparent}
-.coach-voice-btn:active{transform:scale(0.9)}
-.coach-voice-btn.recording{background:linear-gradient(135deg,#ff5f7e,#ff9a5c);animation:pulseGlow 1s ease-in-out infinite alternate}
-@keyframes pulseGlow{from{box-shadow:0 4px 16px rgba(255,95,126,0.4)}to{box-shadow:0 4px 32px rgba(255,95,126,0.9)}}
-.coach-voice-btn svg{width:22px;height:22px;color:white}
-.coach-status{flex:1;font-size:13px;color:var(--text-secondary);line-height:1.3}
-.coach-status strong{color:var(--text-primary);display:block;font-size:14px}
-/* MODAL */
-#lesson-modal{display:none;position:fixed;inset:0;z-index:200;background:rgba(10,10,26,0.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);flex-direction:column;padding:var(--safe-top) 0 var(--safe-bottom);animation:slideUp .35s cubic-bezier(.2,0,0,1)}
-#lesson-modal.open{display:flex}
-@keyframes slideUp{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
-.modal-header{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;border-bottom:1px solid var(--border)}
-.modal-close{width:36px;height:36px;border-radius:50%;background:var(--bg-card);border:1px solid var(--border);color:var(--text-primary);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent}
-.modal-title{font-size:18px;font-weight:800}
-.modal-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:18px;display:flex;flex-direction:column;gap:12px}
-.phrase-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px}
-.phrase-target{font-size:19px;font-weight:700;margin-bottom:5px}
-.phrase-translation{font-size:14px;color:var(--text-secondary)}
-.phrase-listen-btn{margin-top:10px;padding:7px 16px;border-radius:50px;border:1px solid var(--border);background:rgba(79,159,255,0.1);color:var(--text-primary);font-size:12px;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent}
-#toast{position:fixed;bottom:calc(var(--tab-h) + var(--safe-bottom) + 12px);left:50%;transform:translateX(-50%) translateY(20px);background:rgba(30,30,50,0.97);border:1px solid var(--border-glow);border-radius:50px;padding:10px 20px;font-size:13px;font-weight:600;color:var(--text-primary);z-index:300;opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);white-space:nowrap;max-width:90vw;text-align:center}
+
+/* Divider */
+.divider{
+  flex-shrink:0;height:30px;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,0.02);
+  border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+}
+.divider svg{width:18px;height:18px;color:var(--text-muted)}
+
+/* Toast */
+#toast{
+  position:fixed;bottom:calc(20px + var(--safe-bottom));
+  left:50%;transform:translateX(-50%) translateY(20px);
+  background:rgba(30,30,50,0.97);border:1px solid var(--border-glow);
+  border-radius:50px;padding:10px 20px;
+  font-size:13px;font-weight:600;color:var(--text-primary);
+  z-index:300;opacity:0;transition:opacity .3s,transform .3s;
+  pointer-events:none;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  white-space:nowrap;max-width:90vw;text-align:center;
+}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
 </head>
 <body>
 <div id="app">
-  <div id="content">
 
-    <!-- TAB 1: MIRROR -->
-    <div id="tab-mirror" class="tab-panel active">
-      <div class="mirror-half top" id="half-b">
-        <div class="mirror-label">UTENTE B</div>
-        <select class="lang-select" id="lang-b" onchange="onLangChange('b')">
-          <option value="it">🇮🇹 Italiano</option>
-          <option value="en" selected>🇬🇧 English</option>
-          <option value="es">🇪🇸 Español</option>
-          <option value="fr">🇫🇷 Français</option>
-          <option value="zh">🇨🇳 中文</option>
-        </select>
-        <div class="transcript-area placeholder" id="transcript-b">Translation will appear here…</div>
-        <div class="translate-status" id="status-b"></div>
-        <div class="speak-btn-wrap">
-          <button class="speak-btn btn-b" id="btn-b" onclick="toggleMirrorMic('b')">
-            <svg class="ring-svg" viewBox="0 0 96 96"><circle class="ring-bg" cx="48" cy="48" r="44"/><circle class="ring-fill" id="ring-b" cx="48" cy="48" r="44" stroke-dasharray="276" stroke-dashoffset="276"/></svg>
-            <div class="btn-inner">
-              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>
-              <span id="btn-b-label">Speak</span>
-            </div>
-          </button>
-          <div class="mic-timer" id="timer-b"></div>
-        </div>
-      </div>
-      <div style="height:1px;background:var(--border);flex-shrink:0;"></div>
-      <div class="mirror-half" id="half-a">
-        <div class="mirror-label">UTENTE A</div>
-        <select class="lang-select" id="lang-a" onchange="onLangChange('a')">
-          <option value="it" selected>🇮🇹 Italiano</option>
-          <option value="en">🇬🇧 English</option>
-          <option value="es">🇪🇸 Español</option>
-          <option value="fr">🇫🇷 Français</option>
-          <option value="zh">🇨🇳 中文</option>
-        </select>
-        <div class="transcript-area placeholder" id="transcript-a">La traduzione apparirà qui…</div>
-        <div class="translate-status" id="status-a"></div>
-        <div class="speak-btn-wrap">
-          <button class="speak-btn btn-a" id="btn-a" onclick="toggleMirrorMic('a')">
-            <svg class="ring-svg" viewBox="0 0 96 96"><circle class="ring-bg" cx="48" cy="48" r="44"/><circle class="ring-fill" id="ring-a" cx="48" cy="48" r="44" stroke-dasharray="276" stroke-dashoffset="276"/></svg>
-            <div class="btn-inner">
-              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>
-              <span id="btn-a-label">Parla</span>
-            </div>
-          </button>
-          <div class="mic-timer" id="timer-a"></div>
-        </div>
-      </div>
-    </div>
+  <div class="app-header">
+    <h1>🌐 MirrorTalk</h1>
+    <p>Parla — il telefono traduce e legge ad alta voce per il tuo interlocutore</p>
+    <div class="ai-badge">🤖 STT: Web Speech API &nbsp;·&nbsp; Traduzione: MyMemory &nbsp;·&nbsp; TTS: nativo</div>
+  </div>
 
-    <!-- TAB 2: ACADEMY -->
-    <div id="tab-academy" class="tab-panel">
-      <div class="academy-header">
-        <h1>Academy</h1>
-        <p>Scegli una lingua e inizia le micro-lezioni</p>
-      </div>
-      <div class="lang-tabs">
-        <button class="lang-tab active" data-lang="IT" onclick="selectAcademyLang('IT',this)">🇮🇹 IT</button>
-        <button class="lang-tab" data-lang="EN" onclick="selectAcademyLang('EN',this)">🇬🇧 EN</button>
-        <button class="lang-tab" data-lang="ES" onclick="selectAcademyLang('ES',this)">🇪🇸 ES</button>
-        <button class="lang-tab" data-lang="FR" onclick="selectAcademyLang('FR',this)">🇫🇷 FR</button>
-        <button class="lang-tab" data-lang="ZH" onclick="selectAcademyLang('ZH',this)">🇨🇳 ZH</button>
-      </div>
-      <div class="modules-scroll" id="modules-scroll"></div>
-    </div>
+  <div id="mirror">
 
-    <!-- TAB 3: AI COACH -->
-    <div id="tab-coach" class="tab-panel">
-      <div class="coach-header">
-        <div class="coach-scenario-title" id="coach-scenario-label">🎯 Scenario</div>
-        <div class="coach-title" id="coach-title-el">AI Language Coach</div>
-      </div>
-      <div class="scenario-pills">
-        <button class="pill active" onclick="selectScenario(0,this)">✈️ Aeroporto</button>
-        <button class="pill" onclick="selectScenario(1,this)">🍽️ Ristorante</button>
-        <button class="pill" onclick="selectScenario(2,this)">🏨 Hotel</button>
-        <button class="pill" onclick="selectScenario(3,this)">🛒 Shopping</button>
-        <button class="pill" onclick="selectScenario(4,this)">💼 Business</button>
-        <button class="pill" onclick="selectScenario(5,this)">🚌 Trasporti</button>
-      </div>
-      <div class="chat-messages" id="chat-messages"></div>
-      <div class="coach-input-area">
-        <select class="coach-lang-select" id="coach-lang" onchange="resetCoach()">
-          <option value="en">🇬🇧 EN</option>
-          <option value="es">🇪🇸 ES</option>
-          <option value="fr">🇫🇷 FR</option>
-          <option value="it">🇮🇹 IT</option>
-          <option value="zh">🇨🇳 ZH</option>
-        </select>
-        <div class="coach-status">
-          <strong id="coach-status-title">Pronto</strong>
-          <span id="coach-status-sub">Tocca il mic per parlare</span>
-        </div>
-        <button class="coach-voice-btn" id="coach-voice-btn" onclick="toggleCoachMic()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>
+    <!-- METÀ SUPERIORE: interlocutore (schermo ruotato) -->
+    <div class="mirror-half top" id="half-b">
+      <div class="side-label">INTERLOCUTORE</div>
+      <select class="lang-select" id="lang-b" onchange="onLangChange('b')">
+        <option value="en">🇬🇧 English</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="ar">🇸🇦 العربية</option>
+        <option value="pt">🇵🇹 Português</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="bg">🇧🇬 Български</option>
+        <option value="cs">🇨🇿 Čeština</option>
+      </select>
+      <div class="transcript-area placeholder" id="transcript-b">La traduzione apparirà qui…</div>
+      <div class="translate-status" id="status-b"></div>
+      <div class="speak-btn-wrap">
+        <button class="speak-btn btn-b" id="btn-b" onclick="toggleMirrorMic('b')">
+          <svg class="ring-svg" viewBox="0 0 96 96">
+            <circle class="ring-bg" cx="48" cy="48" r="44"/>
+            <circle class="ring-fill" id="ring-b" cx="48" cy="48" r="44" stroke-dasharray="276" stroke-dashoffset="276"/>
+          </svg>
+          <div class="btn-inner">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/>
+            </svg>
+            <span id="btn-b-label">Speak</span>
+          </div>
         </button>
+        <div class="mic-timer" id="timer-b"></div>
       </div>
     </div>
-  </div>
 
-  <div id="tabbar">
-    <button class="tab-btn active" style="color:var(--accent-blue)" onclick="switchTab('mirror',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M9 8h6M9 16h6"/></svg>
-      Mirror<div class="tab-indicator"></div>
-    </button>
-    <button class="tab-btn" style="color:var(--accent-cyan)" onclick="switchTab('academy',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-      Academy<div class="tab-indicator"></div>
-    </button>
-    <button class="tab-btn" style="color:var(--accent-red)" onclick="switchTab('coach',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M3 21v-1a8 8 0 0 1 16 0v1"/></svg>
-      AI Coach<div class="tab-indicator"></div>
-    </button>
-  </div>
-</div>
-
-<div id="lesson-modal">
-  <div class="modal-header">
-    <div>
-      <div class="coach-scenario-title" id="modal-mod-label">Modulo</div>
-      <div class="modal-title" id="modal-lesson-title">Lezione</div>
+    <div class="divider">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M7 16V4m0 0L3 8m4-4l4 4"/>
+        <path d="M17 8v12m0 0l4-4m-4 4l-4-4"/>
+      </svg>
     </div>
-    <button class="modal-close" onclick="closeModal()">✕</button>
+
+    <!-- METÀ INFERIORE: io / tu -->
+    <div class="mirror-half" id="half-a">
+      <div class="side-label">IO (TU)</div>
+      <select class="lang-select" id="lang-a" onchange="onLangChange('a')">
+        <option value="it" selected>🇮🇹 Italiano</option>
+        <option value="en">🇬🇧 English</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="ar">🇸🇦 العربية</option>
+        <option value="pt">🇵🇹 Português</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="bg">🇧🇬 Български</option>
+        <option value="cs">🇨🇿 Čeština</option>
+      </select>
+      <div class="transcript-area placeholder" id="transcript-a">La traduzione apparirà qui…</div>
+      <div class="translate-status" id="status-a"></div>
+      <div class="speak-btn-wrap">
+        <button class="speak-btn btn-a" id="btn-a" onclick="toggleMirrorMic('a')">
+          <svg class="ring-svg" viewBox="0 0 96 96">
+            <circle class="ring-bg" cx="48" cy="48" r="44"/>
+            <circle class="ring-fill" id="ring-a" cx="48" cy="48" r="44" stroke-dasharray="276" stroke-dashoffset="276"/>
+          </svg>
+          <div class="btn-inner">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/>
+            </svg>
+            <span id="btn-a-label">Parla</span>
+          </div>
+        </button>
+        <div class="mic-timer" id="timer-a"></div>
+      </div>
+    </div>
+
   </div>
-  <div class="modal-body" id="modal-body"></div>
 </div>
+
 <div id="toast"></div>
 
 <script>
 'use strict';
-/* ==========================================
-   MIRRORTALK & LEARN v2  — Fixed Edition
-   🔑 DEEPL_API_KEY  → riga ~250
-   🔑 OPENAI_API_KEY → riga ~260
-   ========================================== */
+/*
+ ══════════════════════════════════════════════════════════
+  MIRRORTALK — Traduttore Vocale Bidirezionale v3
+ ══════════════════════════════════════════════════════════
+  Come funziona:
+  • Premi il microfono BLU  (IO)           → parla nella tua lingua
+    Il telefono ascolta, traduce e PARLA AD ALTA VOCE nella lingua dell'interlocutore
+  • L'interlocutore preme il mic ROSSO     → parla nella sua lingua
+    Il telefono ascolta, traduce e PARLA AD ALTA VOCE nella tua lingua
 
-// ── iOS Audio unlock ──
+  Tecnologia (100% gratuita, nessuna registrazione):
+  ┌─ STT (riconoscimento voce) : Web Speech API (Chrome/Safari)
+  ├─ Traduzione                : MyMemory API (gratuita, ~5000 req/giorno)
+  └─ TTS (sintesi vocale)      : SpeechSynthesis API (nativa del browser)
+
+  Opzionale: inserisci la tua API key DeepL per traduzioni più accurate
+  (specialmente utile per Bulgaro e Ceco):
+*/
+const DEEPL_API_KEY = null; // es: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx:fx'
+
+// ── Configurazione lingue ──────────────────────────────
+const LC = {
+  it: { speak:'Parla',    stop:'Stop',   bcp:'it-IT', name:'Italiano',  dl:'IT' },
+  en: { speak:'Speak',    stop:'Stop',   bcp:'en-US', name:'English',   dl:'EN' },
+  es: { speak:'Hablar',   stop:'Stop',   bcp:'es-ES', name:'Español',   dl:'ES' },
+  fr: { speak:'Parler',   stop:'Stop',   bcp:'fr-FR', name:'Français',  dl:'FR' },
+  de: { speak:'Sprechen', stop:'Stop',   bcp:'de-DE', name:'Deutsch',   dl:'DE' },
+  zh: { speak:'说话',     stop:'停止',   bcp:'zh-CN', name:'中文',       dl:'ZH' },
+  ar: { speak:'تكلم',    stop:'إيقاف', bcp:'ar-SA', name:'العربية',   dl:'AR' },
+  pt: { speak:'Falar',    stop:'Parar',  bcp:'pt-PT', name:'Português', dl:'PT' },
+  ru: { speak:'Говорить', stop:'Стоп',   bcp:'ru-RU', name:'Русский',   dl:'RU' },
+  bg: { speak:'Говори',   stop:'Стоп',   bcp:'bg-BG', name:'Български', dl:'BG' },
+  cs: { speak:'Mluvit',   stop:'Stop',   bcp:'cs-CZ', name:'Čeština',   dl:'CS' },
+};
+
+// ── iOS Audio unlock ───────────────────────────────────
 let _unlocked = false;
 function unlockAudio(){
-  if(_unlocked)return; _unlocked=true;
-  try{const c=new(window.AudioContext||window.webkitAudioContext)(),b=c.createBuffer(1,1,22050),s=c.createBufferSource();s.buffer=b;s.connect(c.destination);s.start(0);if(c.state==='suspended')c.resume();}catch(e){}
-  if(window.speechSynthesis){const u=new SpeechSynthesisUtterance('');u.volume=0;window.speechSynthesis.speak(u);}
-}
-document.addEventListener('touchstart',unlockAudio,{once:true});
-document.addEventListener('click',unlockAudio,{once:true});
-document.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
-document.addEventListener('gesturestart',e=>e.preventDefault(),{passive:false});
-
-// ── Toast ──
-let _toastT;
-function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(_toastT);_toastT=setTimeout(()=>t.classList.remove('show'),3200);}
-
-// ── Navigation ──
-function switchTab(name,btn){
-  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('tab-'+name).classList.add('active');
-  btn.classList.add('active');
-  if(name==='academy')renderAcademy(curAcadLang);
-  if(name==='coach'&&chatMsgs.length===0)initChat();
-}
-
-// ── Language config ──
-const LC={
-  it:{speak:'Parla',   stop:'Stop',bcp:'it-IT',name:'Italiano',flag:'🇮🇹'},
-  en:{speak:'Speak',   stop:'Stop',bcp:'en-US',name:'English', flag:'🇬🇧'},
-  es:{speak:'Hablar',  stop:'Stop',bcp:'es-ES',name:'Español', flag:'🇪🇸'},
-  fr:{speak:'Parler',  stop:'Stop',bcp:'fr-FR',name:'Français',flag:'🇫🇷'},
-  zh:{speak:'说话',    stop:'停止',bcp:'zh-CN',name:'中文',    flag:'🇨🇳'},
-};
-function getLang(s){return document.getElementById('lang-'+s).value;}
-function onLangChange(s){const l=LC[getLang(s)]||LC.en;const e=document.getElementById('btn-'+s+'-label');if(e)e.textContent=l.speak;}
-
-// ── API KEYS ──
-// 🔑 Inserisci la tua chiave DeepL qui:
-const DEEPL_API_KEY = null;
-// 🔑 Inserisci la tua chiave OpenAI qui:
-const OPENAI_API_KEY = null;
-
-// ── Translation via MyMemory (free, no key) ──
-async function translateText(text,from,to){
-  if(!text||!text.trim()||from===to)return text;
-  if(DEEPL_API_KEY){
-    const DL={it:'IT',en:'EN',es:'ES',fr:'FR',zh:'ZH'};
-    try{const r=await fetch('https://api-free.deepl.com/v2/translate',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({auth_key:DEEPL_API_KEY,text,source_lang:DL[from],target_lang:DL[to]})});const d=await r.json();if(d.translations?.[0]?.text)return d.translations[0].text;}catch(e){}
-  }
+  if(_unlocked) return; _unlocked = true;
   try{
-    const url=`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`;
-    const r=await fetch(url);const d=await r.json();
-    if(d.responseStatus===200&&d.responseData?.translatedText){
-      const t=d.responseData.translatedText;
-      // MyMemory returns original text if it fails — detect that
-      if(t.trim()&&t.toLowerCase()!==text.toLowerCase()&&!t.includes('MYMEMORY WARNING'))return t;
-    }
-  }catch(e){console.warn('MyMemory err',e);}
-  return text; // return original if all fails
+    const c = new (window.AudioContext||window.webkitAudioContext)();
+    const b = c.createBuffer(1,1,22050), s = c.createBufferSource();
+    s.buffer = b; s.connect(c.destination); s.start(0);
+    if(c.state==='suspended') c.resume();
+  }catch(e){}
+  if(window.speechSynthesis){
+    const u = new SpeechSynthesisUtterance(''); u.volume=0;
+    window.speechSynthesis.speak(u);
+  }
+}
+document.addEventListener('touchstart', unlockAudio, {once:true});
+document.addEventListener('click',      unlockAudio, {once:true});
+document.addEventListener('touchmove',  e => e.preventDefault(), {passive:false});
+document.addEventListener('gesturestart', e => e.preventDefault(), {passive:false});
+
+// ── Toast ──────────────────────────────────────────────
+let _toastT;
+function showToast(m){
+  const t = document.getElementById('toast');
+  t.textContent = m; t.classList.add('show');
+  clearTimeout(_toastT);
+  _toastT = setTimeout(() => t.classList.remove('show'), 3000);
 }
 
-// ── TTS ──
-function speak(text,lang){
-  if(!window.speechSynthesis||!text)return;
+// ── Helpers ────────────────────────────────────────────
+function getLang(s){ return document.getElementById('lang-'+s).value; }
+function onLangChange(s){
+  const l = LC[getLang(s)] || LC.it;
+  const e = document.getElementById('btn-'+s+'-label');
+  if(e) e.textContent = l.speak;
+}
+
+// ── Traduzione ─────────────────────────────────────────
+async function translateText(text, from, to){
+  if(!text||!text.trim()||from===to) return text;
+
+  // DeepL (opzionale, più accurato)
+  if(DEEPL_API_KEY){
+    try{
+      const f = LC[from]?.dl||from.toUpperCase();
+      const t_dl = LC[to]?.dl||to.toUpperCase();
+      const r = await fetch('https://api-free.deepl.com/v2/translate',{
+        method:'POST',
+        headers:{'Content-Type':'application/x-www-form-urlencoded'},
+        body: new URLSearchParams({auth_key:DEEPL_API_KEY,text,source_lang:f,target_lang:t_dl})
+      });
+      const d = await r.json();
+      if(d.translations?.[0]?.text) return d.translations[0].text;
+    }catch(e){ console.warn('DeepL err',e); }
+  }
+
+  // MyMemory (gratuito, nessuna key)
+  try{
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`;
+    const r = await fetch(url);
+    const d = await r.json();
+    if(d.responseStatus===200 && d.responseData?.translatedText){
+      const t = d.responseData.translatedText;
+      if(t.trim() && t.toLowerCase()!==text.toLowerCase() && !t.includes('MYMEMORY WARNING'))
+        return t;
+    }
+  }catch(e){ console.warn('MyMemory err',e); }
+
+  return text;
+}
+
+// ── TTS ────────────────────────────────────────────────
+function speak(text, lang, onDone){
+  if(!window.speechSynthesis||!text){ if(onDone) onDone(); return; }
   window.speechSynthesis.cancel();
   setTimeout(()=>{
-    const u=new SpeechSynthesisUtterance(text);
-    u.lang=LC[lang]?.bcp||lang; u.rate=0.93; u.pitch=1;
-    const vs=window.speechSynthesis.getVoices();
-    const px=u.lang.substring(0,2);
-    const v=vs.find(x=>x.lang.startsWith(px)&&x.localService)||vs.find(x=>x.lang.startsWith(px));
-    if(v)u.voice=v;
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang  = LC[lang]?.bcp || lang;
+    u.rate  = 0.93; u.pitch = 1;
+    const vs = window.speechSynthesis.getVoices();
+    const px = u.lang.substring(0,2);
+    const v  = vs.find(x=>x.lang.startsWith(px)&&x.localService)
+            || vs.find(x=>x.lang.startsWith(px));
+    if(v) u.voice = v;
+    if(onDone) u.onend = onDone;
     window.speechSynthesis.speak(u);
-  },120);
+  }, 120);
 }
-if(window.speechSynthesis){window.speechSynthesis.getVoices();window.speechSynthesis.onvoiceschanged=()=>window.speechSynthesis.getVoices();}
+if(window.speechSynthesis){
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = ()=>window.speechSynthesis.getVoices();
+}
 
-// ════════════════════════════════════════════
-// MIRROR STT — con countdown + auto-stop
-// ════════════════════════════════════════════
-const MIC_SEC=8;
-let mRec=null,mSide=null,mTimer=null,mCnt=0,mBest='';
+// ══════════════════════════════════════════════════════
+//  MIRROR STT — ascolto + traduzione + voce
+// ══════════════════════════════════════════════════════
+const MIC_SEC = 9;
+let mRec=null, mSide=null, mTimer=null, mCnt=0, mBest='';
 
 function toggleMirrorMic(side){
-  if(mSide===side){finishMirror();return;}
-  if(mSide){cancelMirror();}
+  if(mSide===side){ finishMirror(); return; }
+  if(mSide){ cancelMirror(); }
   startMirror(side);
 }
 
 function startMirror(side){
   unlockAudio();
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){showToast('⚠️ Speech recognition non disponibile su questo browser');return;}
-  const from=getLang(side);
-  const lc=LC[from]||LC.it;
-  mSide=side; mBest='';
-  const btn=document.getElementById('btn-'+side);
-  const lbl=document.getElementById('btn-'+side+'-label');
-  const ta=document.getElementById('transcript-'+side);
-  const timerEl=document.getElementById('timer-'+side);
-  const ring=document.getElementById('ring-'+side);
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ showToast('⚠️ Speech recognition non supportato (usa Chrome/Safari)'); return; }
+
+  const from = getLang(side);
+  const lc   = LC[from] || LC.it;
+  mSide = side; mBest = '';
+
+  const btn     = document.getElementById('btn-'+side);
+  const lbl     = document.getElementById('btn-'+side+'-label');
+  const ta      = document.getElementById('transcript-'+side);
+  const timerEl = document.getElementById('timer-'+side);
+  const ring    = document.getElementById('ring-'+side);
+
   btn.classList.add('recording');
-  lbl.textContent=lc.stop;
-  ta.classList.remove('placeholder');
+  lbl.textContent = lc.stop;
+  ta.classList.remove('placeholder','speaking');
   ta.classList.add('listening');
-  ta.textContent='🎙️ '+(from==='zh'?'聆听中…':from==='it'?'In ascolto…':'Listening…');
+  ta.textContent = '🎙️ In ascolto…';
+
   // Countdown
-  mCnt=MIC_SEC;
-  const circ=276;
-  ring.style.strokeDashoffset=circ;
-  mTimer=setInterval(()=>{
+  mCnt = MIC_SEC;
+  const circ = 276;
+  ring.style.strokeDashoffset = circ;
+  mTimer = setInterval(()=>{
     mCnt--;
-    timerEl.textContent=mCnt+'s';
-    ring.style.strokeDashoffset=circ-((MIC_SEC-mCnt)/MIC_SEC)*circ;
-    if(mCnt<=0)finishMirror();
+    timerEl.textContent = mCnt+'s';
+    ring.style.strokeDashoffset = circ - ((MIC_SEC-mCnt)/MIC_SEC)*circ;
+    if(mCnt<=0) finishMirror();
   },1000);
-  // Recognition
-  mRec=new SR();
-  mRec.lang=lc.bcp;
-  mRec.interimResults=true;
-  mRec.continuous=true; // iOS: keep open
-  mRec.onresult=(e)=>{
-    let interim='';
+
+  // Riconoscimento vocale
+  mRec = new SR();
+  mRec.lang = lc.bcp;
+  mRec.interimResults = true;
+  mRec.continuous = true;
+
+  mRec.onresult = (e)=>{
+    let interim = '';
     for(let i=e.resultIndex;i<e.results.length;i++){
-      const t=e.results[i][0].transcript;
-      if(e.results[i].isFinal)mBest+=t+' ';
-      else interim=t;
+      const t = e.results[i][0].transcript;
+      if(e.results[i].isFinal) mBest += t+' ';
+      else interim = t;
     }
-    ta.textContent=(mBest+interim).trim()||ta.textContent;
+    ta.textContent = (mBest+interim).trim() || ta.textContent;
   };
-  mRec.onerror=(e)=>{
-    if(e.error==='no-speech'){finishMirror();return;}
-    if(e.error!=='aborted')showToast('❌ '+e.error);
+  mRec.onerror = (e)=>{
+    if(e.error==='no-speech'){ finishMirror(); return; }
+    if(e.error!=='aborted') showToast('❌ '+e.error);
     cancelMirror();
   };
-  mRec.onend=()=>{
-    // iOS kills recognition early — restart if still counting
-    if(mSide===side&&mCnt>0){try{mRec.start();}catch(err){finishMirror();}}
+  // iOS riavvio automatico
+  mRec.onend = ()=>{
+    if(mSide===side && mCnt>0){ try{ mRec.start(); }catch(err){ finishMirror(); } }
   };
-  try{mRec.start();}catch(e){showToast('❌ Microfono non disponibile');cancelMirror();}
+  try{ mRec.start(); }
+  catch(e){ showToast('❌ Microfono non disponibile'); cancelMirror(); }
 }
 
 async function finishMirror(){
-  if(!mSide)return;
-  const side=mSide;
-  const from=getLang(side);
-  const text=mBest.trim();
+  if(!mSide) return;
+  const side = mSide;
+  const from  = getLang(side);
+  const text  = mBest.trim();
   _resetMirrorUI(side);
-  const ta=document.getElementById('transcript-'+side);
+
+  const ta = document.getElementById('transcript-'+side);
   ta.classList.remove('listening');
+
   if(!text){
     ta.classList.add('placeholder');
-    ta.textContent=from==='it'?'Nessun testo rilevato. Riprova.':'No speech detected. Try again.';
+    ta.textContent = 'Nessun testo rilevato. Riprova.';
     return;
   }
-  ta.textContent=text;
-  const other=side==='a'?'b':'a';
-  const toLang=getLang(other);
-  const otherTA=document.getElementById('transcript-'+other);
-  const statusEl=document.getElementById('status-'+other);
-  otherTA.classList.remove('placeholder','listening');
-  statusEl.innerHTML='<div class="spinner"></div> Traduzione in corso…';
-  const translated=await translateText(text,from,toLang);
-  statusEl.innerHTML='';
-  otherTA.textContent=translated||text;
-  speak(translated||text,toLang);
+  ta.textContent = text;
+
+  // Chi parla nel lato A → la traduzione viene letta nel lato B, e viceversa
+  const other    = side==='a' ? 'b' : 'a';
+  const toLang   = getLang(other);
+  const otherTA  = document.getElementById('transcript-'+other);
+  const statusEl = document.getElementById('status-'+other);
+
+  otherTA.classList.remove('placeholder','listening','speaking');
+  statusEl.innerHTML = '<div class="spinner"></div> Traduzione in corso…';
+
+  const translated = await translateText(text, from, toLang);
+  statusEl.innerHTML = '';
+
+  const finalText = translated || text;
+  otherTA.classList.add('speaking');
+  otherTA.textContent = finalText;
+
+  showToast('🔊 → ' + (LC[toLang]?.name || toLang));
+
+  // Parla ad alta voce nella lingua dell'altro
+  speak(finalText, toLang, ()=>{
+    otherTA.classList.remove('speaking');
+  });
 }
 
 function cancelMirror(){
@@ -445,521 +526,24 @@ function cancelMirror(){
 }
 
 function _resetMirrorUI(side){
-  clearInterval(mTimer);mTimer=null;
-  if(mRec){try{mRec.abort();}catch(e){}mRec=null;}
+  clearInterval(mTimer); mTimer=null;
+  if(mRec){ try{ mRec.abort(); }catch(e){} mRec=null; }
   if(side){
-    const from=getLang(side);
-    const lc=LC[from]||LC.it;
-    const btn=document.getElementById('btn-'+side);
+    const lc = LC[getLang(side)] || LC.it;
+    const btn = document.getElementById('btn-'+side);
     btn.classList.remove('recording');
-    document.getElementById('btn-'+side+'-label').textContent=lc.speak;
-    document.getElementById('timer-'+side).textContent='';
-    document.getElementById('ring-'+side).style.strokeDashoffset='276';
+    document.getElementById('btn-'+side+'-label').textContent = lc.speak;
+    document.getElementById('timer-'+side).textContent = '';
+    document.getElementById('ring-'+side).style.strokeDashoffset = '276';
     document.getElementById('transcript-'+side).classList.remove('listening');
   }
-  mSide=null;
+  mSide = null;
 }
 
-// ════════════════════════════════════════════
-// ACADEMY DATA — 50 lezioni × 5 lingue
-// ════════════════════════════════════════════
-const MODS=['Base','Travel','Social','Business','Mastery'];
-const MICONS=['🔤','✈️','💬','💼','🏆'];
-const LCOLORS={
-  IT:{fill:'#4fcfff',bar:'linear-gradient(90deg,#4fcfff,#2290cc)'},
-  EN:{fill:'#4f9fff',bar:'linear-gradient(90deg,#4f9fff,#2d6bdd)'},
-  ES:{fill:'#ff5f7e',bar:'linear-gradient(90deg,#ff5f7e,#c03050)'},
-  FR:{fill:'#ffd166',bar:'linear-gradient(90deg,#ffd166,#e0922a)'},
-  ZH:{fill:'#ff9a3c',bar:'linear-gradient(90deg,#ff9a3c,#e05c00)'},
-};
-
-// Full lesson data per lingua
-const LESSONS={
-  EN:{
-    Base:[
-      {t:'Greetings & Introductions',p:[{a:'Hello! My name is…',b:'Ciao! Mi chiamo…'},{a:'Nice to meet you!',b:'Piacere di conoscerti!'},{a:'How are you? — I\'m fine!',b:'Come stai? — Sto bene!'},{a:'Good morning / Good night',b:'Buongiorno / Buonanotte'},{a:'See you later!',b:'A dopo!'}]},
-      {t:'Numbers & Counting',p:[{a:'One, two, three, four, five',b:'Uno, due, tre, quattro, cinque'},{a:'How many? — Ten.',b:'Quanti? — Dieci.'},{a:'I need two tickets.',b:'Ho bisogno di due biglietti.'},{a:'It costs twenty euros.',b:'Costa venti euro.'}]},
-      {t:'Days, Months & Time',p:[{a:'Today is Monday.',b:'Oggi è lunedì.'},{a:'It\'s 3 o\'clock.',b:'Sono le tre.'},{a:'The meeting is on Friday.',b:'La riunione è venerdì.'},{a:'January, February, March…',b:'Gennaio, febbraio, marzo…'}]},
-      {t:'Colors & Descriptions',p:[{a:'The sky is blue.',b:'Il cielo è blu.'},{a:'A big, round table.',b:'Un tavolo grande e rotondo.'},{a:'I\'d like the red one.',b:'Vorrei quello rosso.'},{a:'It\'s small, light and cheap.',b:'È piccolo, leggero e economico.'}]},
-      {t:'Family & People',p:[{a:'This is my mother.',b:'Questa è mia madre.'},{a:'I have two brothers.',b:'Ho due fratelli.'},{a:'My friend is very kind.',b:'Il mio amico è molto gentile.'},{a:'How old are you? — I\'m 30.',b:'Quanti anni hai? — Ne ho 30.'}]},
-      {t:'Food & Drinks',p:[{a:'I\'d like a coffee, please.',b:'Vorrei un caffè, per favore.'},{a:'Do you have vegetarian options?',b:'Avete opzioni vegetariane?'},{a:'The food is delicious!',b:'Il cibo è delizioso!'},{a:'Can I have the menu?',b:'Posso avere il menù?'}]},
-      {t:'Common Verbs — Present',p:[{a:'I go to work by train.',b:'Vado al lavoro in treno.'},{a:'She reads every morning.',b:'Lei legge ogni mattina.'},{a:'We eat dinner at 7 PM.',b:'Ceniamo alle 19.'},{a:'He speaks three languages.',b:'Lui parla tre lingue.'}]},
-      {t:'Asking Questions',p:[{a:'Where is the bathroom?',b:'Dov\'è il bagno?'},{a:'How much does this cost?',b:'Quanto costa questo?'},{a:'Can you help me, please?',b:'Può aiutarmi, per favore?'},{a:'What does this word mean?',b:'Cosa significa questa parola?'}]},
-      {t:'Adjectives & Feelings',p:[{a:'I\'m happy / sad / tired.',b:'Sono felice / triste / stanco.'},{a:'This film is very interesting!',b:'Questo film è molto interessante!'},{a:'The weather is beautiful today.',b:'Il tempo è bello oggi.'},{a:'She is smart and funny.',b:'Lei è intelligente e divertente.'}]},
-      {t:'Basic Directions',p:[{a:'Turn left / Turn right.',b:'Giri a sinistra / Giri a destra.'},{a:'Go straight ahead.',b:'Vada dritto.'},{a:'It\'s near the station.',b:'È vicino alla stazione.'},{a:'It\'s about 10 minutes away.',b:'Dista circa 10 minuti.'}]},
-    ],
-    Travel:[
-      {t:'At the Airport',p:[{a:'Where is check-in?',b:'Dov\'è il check-in?'},{a:'My flight is delayed.',b:'Il mio volo è in ritardo.'},{a:'I\'d like a window seat.',b:'Vorrei un posto al finestrino.'},{a:'Where is baggage claim?',b:'Dov\'è il ritiro bagagli?'}]},
-      {t:'At the Hotel',p:[{a:'I have a reservation.',b:'Ho una prenotazione.'},{a:'Can I check in early?',b:'Posso fare il check-in prima?'},{a:'The room is too noisy.',b:'La camera è troppo rumorosa.'},{a:'Can I have more towels?',b:'Posso avere altri asciugamani?'}]},
-      {t:'Public Transport',p:[{a:'Which bus goes to the centre?',b:'Quale autobus va al centro?'},{a:'A single ticket, please.',b:'Un biglietto di sola andata, per favore.'},{a:'Where do I get off?',b:'Dove devo scendere?'},{a:'Is this seat taken?',b:'Questo posto è occupato?'}]},
-      {t:'At the Restaurant',p:[{a:'A table for two, please.',b:'Un tavolo per due, per favore.'},{a:'What do you recommend?',b:'Cosa consiglia?'},{a:'The bill, please.',b:'Il conto, per favore.'},{a:'I\'m allergic to nuts.',b:'Sono allergico alle noci.'}]},
-      {t:'Shopping',p:[{a:'How much does this cost?',b:'Quanto costa questo?'},{a:'Do you have a smaller size?',b:'Lo avete in una taglia più piccola?'},{a:'I\'ll take it!',b:'Lo prendo!'},{a:'Do you accept credit cards?',b:'Accettate carte di credito?'}]},
-      {t:'Emergencies',p:[{a:'Call the police!',b:'Chiami la polizia!'},{a:'I\'ve lost my passport.',b:'Ho perso il mio passaporto.'},{a:'I need a doctor.',b:'Ho bisogno di un medico.'},{a:'Help!',b:'Aiuto!'}]},
-      {t:'Sightseeing',p:[{a:'What time does the museum open?',b:'A che ora apre il museo?'},{a:'Is there a guided tour?',b:'C\'è una visita guidata?'},{a:'Can I take a photo here?',b:'Posso fare una foto qui?'}]},
-      {t:'Currency & Payments',p:[{a:'Where\'s the nearest ATM?',b:'Dov\'è il bancomat più vicino?'},{a:'What\'s the exchange rate?',b:'Qual è il tasso di cambio?'},{a:'I\'d like to pay by card.',b:'Vorrei pagare con la carta.'}]},
-      {t:'Accommodation',p:[{a:'Is breakfast included?',b:'La colazione è inclusa?'},{a:'Is there Wi-Fi?',b:'C\'è il Wi-Fi?'},{a:'I\'d like to extend my stay.',b:'Vorrei prolungare il soggiorno.'}]},
-      {t:'Customs & Border',p:[{a:'I\'m here on holiday.',b:'Sono qui in vacanza.'},{a:'I have nothing to declare.',b:'Non ho nulla da dichiarare.'},{a:'Here is my boarding pass.',b:'Ecco il mio biglietto d\'imbarco.'}]},
-    ],
-    Social:[
-      {t:'Small Talk',p:[{a:'What a lovely day!',b:'Che bella giornata!'},{a:'Do you come here often?',b:'Vieni spesso qui?'},{a:'Where are you from?',b:'Da dove vieni?'},{a:'I\'m from Italy.',b:'Sono italiano/a.'}]},
-      {t:'Compliments',p:[{a:'You look great today!',b:'Oggi hai un aspetto fantastico!'},{a:'That\'s an excellent idea!',b:'È un\'idea eccellente!'},{a:'Your English is very good!',b:'Il tuo inglese è molto buono!'}]},
-      {t:'Making Plans',p:[{a:'Are you free this weekend?',b:'Sei libero/a questo weekend?'},{a:'Let\'s meet for coffee.',b:'Incontriamoci per un caffè.'},{a:'I\'ll pick you up at 8.',b:'Passo a prenderti alle 8.'}]},
-      {t:'Hobbies & Interests',p:[{a:'I love hiking and photography.',b:'Adoro fare escursioni e la fotografia.'},{a:'In my free time I paint.',b:'Nel tempo libero dipingo.'},{a:'What music do you like?',b:'Che musica ti piace?'}]},
-      {t:'Opinions & Agreement',p:[{a:'In my opinion, it\'s better to…',b:'A mio avviso, è meglio…'},{a:'I totally agree!',b:'Sono pienamente d\'accordo!'},{a:'I\'m not sure about that.',b:'Non sono sicuro di questo.'}]},
-      {t:'Apologies & Excuses',p:[{a:'I\'m so sorry, I didn\'t mean it.',b:'Mi dispiace tanto, non volevo.'},{a:'No worries at all!',b:'Nessun problema!'},{a:'I apologise for the delay.',b:'Mi scuso per il ritardo.'}]},
-      {t:'Giving Advice',p:[{a:'You should try this restaurant!',b:'Dovresti provare questo ristorante!'},{a:'If I were you, I\'d ask for help.',b:'Se fossi in te, chiederei aiuto.'},{a:'It\'s worth visiting.',b:'Vale la pena visitarlo.'}]},
-      {t:'Feelings & Emotions',p:[{a:'I\'m really excited about this!',b:'Sono davvero entusiasta!'},{a:'I feel a bit nervous.',b:'Mi sento un po\' nervoso.'},{a:'That made me very happy.',b:'Questo mi ha reso molto felice.'}]},
-      {t:'Movies, Music & Books',p:[{a:'Have you seen the latest film?',b:'Hai visto l\'ultimo film?'},{a:'I\'m obsessed with this song!',b:'Sono ossessionato da questa canzone!'},{a:'I highly recommend this book.',b:'Consiglio vivamente questo libro.'}]},
-      {t:'Social Media',p:[{a:'Follow me on Instagram!',b:'Seguimi su Instagram!'},{a:'Check out my latest post.',b:'Guarda il mio ultimo post.'},{a:'Let\'s stay in touch.',b:'Rimaniamo in contatto.'}]},
-    ],
-    Business:[
-      {t:'Introductions at Work',p:[{a:'Let me introduce myself.',b:'Mi permetta di presentarmi.'},{a:'I work in the marketing department.',b:'Lavoro nel reparto marketing.'},{a:'It\'s a pleasure to meet you.',b:'È un piacere conoscerla.'}]},
-      {t:'Meetings',p:[{a:'Shall we begin?',b:'Possiamo cominciare?'},{a:'The main item on the agenda is…',b:'Il punto principale all\'ordine del giorno è…'},{a:'Can we return to that later?',b:'Possiamo riprendere quel punto più tardi?'}]},
-      {t:'Emails & Correspondence',p:[{a:'I\'m writing to enquire about…',b:'Scrivo per informarmi riguardo a…'},{a:'Please find attached the report.',b:'In allegato trova il rapporto.'},{a:'I look forward to hearing from you.',b:'Resto in attesa di una sua risposta.'}]},
-      {t:'Negotiations',p:[{a:'We\'d like to propose a 10% discount.',b:'Vorremmo proporre uno sconto del 10%.'},{a:'That seems fair to us.',b:'Ci sembra giusto.'},{a:'We need more time to consider.',b:'Abbiamo bisogno di più tempo.'}]},
-      {t:'Presentations',p:[{a:'Today I\'ll be talking about…',b:'Oggi parlerò di…'},{a:'As you can see on this slide…',b:'Come potete vedere su questa diapositiva…'},{a:'Are there any questions?',b:'Ci sono domande?'}]},
-      {t:'Data & Reports',p:[{a:'Revenue increased by 15%.',b:'I ricavi sono aumentati del 15%.'},{a:'The trend is positive.',b:'Il trend è positivo.'},{a:'We exceeded our Q3 targets.',b:'Abbiamo superato i nostri obiettivi del Q3.'}]},
-      {t:'Problem Solving',p:[{a:'There seems to be an issue with…',b:'Sembra esserci un problema con…'},{a:'How can we resolve this?',b:'Come possiamo risolvere questo?'},{a:'Let\'s brainstorm some solutions.',b:'Troviamo insieme delle soluzioni.'}]},
-      {t:'Networking',p:[{a:'Here\'s my business card.',b:'Ecco il mio biglietto da visita.'},{a:'Let\'s connect on LinkedIn.',b:'Connettiamoci su LinkedIn.'},{a:'Let\'s set up a call next week.',b:'Fissiamo una chiamata la settimana prossima.'}]},
-      {t:'Job Interviews',p:[{a:'Tell me about your experience.',b:'Mi parli della sua esperienza.'},{a:'What are your greatest strengths?',b:'Quali sono i suoi punti di forza?'},{a:'Where do you see yourself in 5 years?',b:'Dove si vede tra 5 anni?'}]},
-      {t:'Remote Work',p:[{a:'Can everyone see my screen?',b:'Tutti riescono a vedere il mio schermo?'},{a:'Let\'s take a five-minute break.',b:'Facciamo una pausa di cinque minuti.'},{a:'Sorry, you were breaking up.',b:'Scusa, sentivo male.'}]},
-    ],
-    Mastery:[
-      {t:'Idioms & Expressions',p:[{a:'It\'s raining cats and dogs.',b:'Piove a dirotto.'},{a:'Break a leg! (Good luck)',b:'In bocca al lupo!'},{a:'Bite the bullet.',b:'Stringere i denti.'},{a:'The ball is in your court.',b:'La palla è nel tuo campo.'}]},
-      {t:'Phrasal Verbs',p:[{a:'I\'ll look into this issue.',b:'Mi occuperò di questa questione.'},{a:'Can you fill me in?',b:'Puoi aggiornarmi?'},{a:'Let\'s put this off until tomorrow.',b:'Rimandare questo a domani.'}]},
-      {t:'Sarcasm & Humour',p:[{a:'Oh sure, totally fine! (ironic)',b:'Certo, ma figurati! (ironico)'},{a:'As if!',b:'Ma figurati!'},{a:'That went well… (after disaster)',b:'È andata benissimo… (ironico)'}]},
-      {t:'Abstract Ideas',p:[{a:'The concept of freedom is complex.',b:'Il concetto di libertà è complesso.'},{a:'Let\'s think outside the box.',b:'Pensiamo fuori dagli schemi.'},{a:'Two sides to every story.',b:'Ogni storia ha due facce.'}]},
-      {t:'Debating',p:[{a:'That\'s valid, however…',b:'È un punto valido, tuttavia…'},{a:'I beg to differ.',b:'Mi permetta di dissentire.'},{a:'The evidence suggests otherwise.',b:'Le prove suggeriscono il contrario.'}]},
-      {t:'Literature & Culture',p:[{a:'The novel explores human nature.',b:'Il romanzo esplora la natura umana.'},{a:'It\'s a masterpiece of its era.',b:'È un capolavoro della sua epoca.'}]},
-      {t:'Formal Writing',p:[{a:'I would respectfully point out…',b:'Mi permetto di far notare…'},{a:'Furthermore, it should be noted…',b:'Inoltre, si dovrebbe notare…'}]},
-      {t:'Technical Vocabulary',p:[{a:'Run a diagnostic check.',b:'Eseguire una diagnostica.'},{a:'The algorithm needs optimising.',b:'L\'algoritmo va ottimizzato.'}]},
-      {t:'Storytelling',p:[{a:'Once upon a time…',b:'C\'era una volta…'},{a:'The plot thickens!',b:'La trama si infittisce!'},{a:'They all lived happily ever after.',b:'Vissero tutti felici e contenti.'}]},
-      {t:'Near-Native Fluency',p:[{a:'That\'s the gist of it.',b:'Questo è il succo.'},{a:'To cut a long story short…',b:'Per farla breve…'},{a:'It\'s on the tip of my tongue.',b:'Ce l\'ho sulla punta della lingua.'}]},
-    ],
-  },
-};
-
-// Build other langs from EN by swapping a/b and using localized titles
-const TITLES={
-  IT:{
-    Base:['Saluti e presentazioni','Numeri e conteggio','Giorni, mesi e ora','Colori e descrizioni','Famiglia e persone','Cibo e bevande','Verbi comuni','Fare domande','Aggettivi e sentimenti','Indicazioni di base'],
-    Travel:['All\'aeroporto','In hotel','Trasporto pubblico','Al ristorante','Shopping','Emergenze','Turismo','Valuta e pagamenti','Alloggio','Dogana'],
-    Social:['Conversazione casuale','Complimenti','Fare piani','Hobby','Opinioni','Scuse','Consigli','Emozioni','Film e musica','Social media'],
-    Business:['Presentazioni al lavoro','Riunioni','Email','Negoziazioni','Presentazioni aziendali','Dati e report','Problem solving','Networking','Colloqui','Lavoro da remoto'],
-    Mastery:['Modi di dire','Verbi frasali','Sarcasmo','Idee astratte','Dibattito','Letteratura','Scrittura formale','Tecnico','Storytelling','Fluenza madrelingua'],
-  },
-  ES:{
-    Base:['Saludos','Números','Días y meses','Colores','Familia','Comida','Verbos','Preguntas','Adjetivos','Direcciones'],
-    Travel:['Aeropuerto','Hotel','Transporte','Restaurante','Compras','Emergencias','Turismo','Pagos','Alojamiento','Aduana'],
-    Social:['Charla','Cumplidos','Planes','Aficiones','Opiniones','Disculpas','Consejos','Emociones','Cine y música','Redes sociales'],
-    Business:['Presentaciones','Reuniones','Correos','Negociaciones','Presentaciones','Datos','Problemas','Networking','Entrevistas','Teletrabajo'],
-    Mastery:['Modismos','Phrasal verbs','Sarcasmo','Ideas abstractas','Debate','Literatura','Escritura formal','Técnico','Narrativa','Fluidez nativa'],
-  },
-  FR:{
-    Base:['Salutations','Nombres','Jours et mois','Couleurs','Famille','Nourriture','Verbes','Questions','Adjectifs','Directions'],
-    Travel:['Aéroport','Hôtel','Transports','Restaurant','Shopping','Urgences','Tourisme','Paiements','Hébergement','Douane'],
-    Social:['Conversation','Compliments','Plans','Loisirs','Opinions','Excuses','Conseils','Émotions','Cinéma et musique','Réseaux sociaux'],
-    Business:['Présentations','Réunions','E-mails','Négociations','Présentations','Données','Problèmes','Networking','Entretiens','Télétravail'],
-    Mastery:['Expressions','Verbes phrasaux','Sarcasme','Idées abstraites','Débat','Littérature','Écriture formelle','Technique','Narration','Fluidité native'],
-  },
-  ZH:{
-    Base:['问候与介绍','数字','日期与时间','颜色','家庭','食物与饮品','常用动词','提问','形容词','方向'],
-    Travel:['机场','酒店','公共交通','餐厅','购物','紧急情况','旅游','支付','住宿','海关'],
-    Social:['闲聊','赞美','计划','爱好','意见','道歉','建议','情感','电影与音乐','社交媒体'],
-    Business:['职场介绍','会议','邮件','谈判','演示','数据','解决问题','社交网络','面试','远程工作'],
-    Mastery:['习语','短语动词','讽刺','抽象概念','辩论','文学','正式写作','技术词汇','叙事','母语流利度'],
-  },
-};
-
-function buildLang(titleMap,swapAB){
-  const res={};
-  MODS.forEach(m=>{
-    res[m]=(LESSONS.EN[m]||[]).map((l,li)=>({
-      t:titleMap[m]?.[li]||l.t,
-      p:l.p.map(p=>swapAB?{a:p.b,b:p.a}:{a:p.a,b:p.b})
-    }));
-  });
-  return res;
-}
-LESSONS.IT=buildLang(TITLES.IT,true);
-LESSONS.ES=buildLang(TITLES.ES,false);
-LESSONS.FR=buildLang(TITLES.FR,false);
-LESSONS.ZH=buildLang(TITLES.ZH,false);
-
-// Progress
-let prog={};
-try{prog=JSON.parse(localStorage.getItem('mt_p2'))||{};}catch(e){}
-function saveProg(){try{localStorage.setItem('mt_p2',JSON.stringify(prog));}catch(e){}}
-function getProg(lang,mod,idx){
-  const k=`${lang}_${mod}_${idx}`;
-  if(!(k in prog)){prog[k]=idx<2?100:idx===2?60:idx===3?30:0;saveProg();}
-  return prog[k];
-}
-
-// ── Academy render ──
-let curAcadLang='IT';
-function selectAcademyLang(lang,btn){
-  curAcadLang=lang;
-  document.querySelectorAll('.lang-tab').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  renderAcademy(lang);
-}
-function renderAcademy(lang){
-  const scroll=document.getElementById('modules-scroll');
-  scroll.innerHTML='';
-  const data=LESSONS[lang]||LESSONS.EN;
-  const col=LCOLORS[lang]||LCOLORS.EN;
-  MODS.forEach((mod,mi)=>{
-    const sec=document.createElement('div');
-    sec.className='module-section';
-    sec.innerHTML=`<div class="module-title">${MICONS[mi]} Modulo ${mi+1} — ${mod}</div>`;
-    (data[mod]||[]).forEach((lesson,li)=>{
-      const pct=getProg(lang,mod,li);
-      const num=pct>=100?'✓':`${mi*10+li+1}`;
-      const cls=pct>=100?'done':'open';
-      const card=document.createElement('div');
-      card.className='lesson-card';
-      card.innerHTML=`<div class="lesson-num ${cls}">${num}</div><div class="lesson-info"><div class="lesson-title">${lesson.t}</div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${col.bar}"></div></div></div><div class="lesson-pct">${pct}%</div>`;
-      card.onclick=()=>openLesson(lesson,lang,mod,li,col);
-      sec.appendChild(card);
-    });
-    scroll.appendChild(sec);
-  });
-}
-function openLesson(lesson,lang,mod,idx,col){
-  document.getElementById('modal-mod-label').textContent=`${lang} — ${mod}`;
-  document.getElementById('modal-lesson-title').textContent=lesson.t;
-  const body=document.getElementById('modal-body');
-  body.innerHTML='';
-  lesson.p.forEach(p=>{
-    const card=document.createElement('div');
-    card.className='phrase-card';
-    const safe=p.a.replace(/'/g,"\\'");
-    const lc=lang.toLowerCase();
-    card.innerHTML=`<div class="phrase-target" style="color:${col.fill}">${p.a}</div><div class="phrase-translation">${p.b}</div><button class="phrase-listen-btn" onclick="speak('${safe}','${lc}')">🔊 Ascolta</button>`;
-    body.appendChild(card);
-  });
-  document.getElementById('lesson-modal').classList.add('open');
-  const k=`${lang}_${mod}_${idx}`;
-  prog[k]=Math.min(100,(prog[k]||0)+20);
-  saveProg();
-}
-function closeModal(){
-  document.getElementById('lesson-modal').classList.remove('open');
-  renderAcademy(curAcadLang);
-}
-
-// ════════════════════════════════════════════
-// AI COACH — risposte contestuali per keyword
-// ════════════════════════════════════════════
-const SCENARIOS=[
-  {name:'Aeroporto',emoji:'✈️',
-   op:{en:'Hello! Welcome to the airport. How can I assist you?',it:'Benvenuto in aeroporto! Come posso aiutarla?',es:'¡Bienvenido al aeropuerto! ¿En qué puedo ayudarle?',fr:'Bienvenue à l\'aéroport! Comment puis-je vous aider?',zh:'欢迎来到机场！我能帮您什么？'},
-   kw:{
-     en:{
-       'check.?in|desk|counter':['Check-in is on the ground floor, Hall A. Follow the signs!','The check-in desks open 3 hours before departure — plenty of time!'],
-       'gate|board|where.*flight':['Your gate will be on the departures board 45 minutes before boarding.','Please proceed to Gate B12 — boarding starts soon!'],
-       'bag|luggage|suitcase|lost':['Baggage claim is on the lower level, Hall C — about 20 minutes after landing.','For lost baggage please go to the Lost & Found counter in Hall D.'],
-       'delay|late|cancel|wait':['I\'m sorry for the delay. Your updated departure time is on the main board.','The delay is due to weather conditions. We apologise for the inconvenience.'],
-       'passport|visa|document|id':['Please have your passport and boarding pass ready. The passport control queue is usually quick.'],
-       'taxi|bus|metro|city':['Taxis are outside Exit 3. The airport bus departs every 20 minutes from Stop B.'],
-       'toilet|bathroom|restroom':['The nearest restrooms are just past the security checkpoint, on your right.'],
-       'wifi|internet|connect':['The free Wi-Fi network is "Airport_Free_WiFi" — no password needed!'],
-       'help|assist|excuse':['Of course! I\'m here to help. What do you need?','Happy to help — what\'s the issue?'],
-     },
-     it:{
-       'check.?in|banco|dove':['Il check-in è al piano terra, Hall A. Segua le indicazioni!'],
-       'gate|imbarco|volo':['Il suo gate sarà indicato sul tabellone 45 minuti prima dell\'imbarco.'],
-       'bagagli|valigia|perso':['Il ritiro bagagli è al livello inferiore, Hall C.'],
-       'ritardo|aspettare|annulato':['Mi scuso per il ritardo. L\'orario aggiornato è sul tabellone principale.'],
-       'taxi|autobus|città':['I taxi sono fuori dall\'Uscita 3. L\'autobus parte ogni 20 minuti dalla fermata B.'],
-       'aiuto|scusa|dove':['Certo! Sono qui per aiutarla. Di cosa ha bisogno?'],
-     },
-     es:{
-       'facturación|mostrador':['La facturación está en la planta baja, Sala A.'],
-       'puerta|embarque':['Su puerta aparecerá en el tablero 45 minutos antes del embarque.'],
-       'equipaje|maleta|perdido':['La recogida de equipaje está en el nivel inferior, Sala C.'],
-     },
-     fr:{
-       'enregistrement|comptoir':['L\'enregistrement est au rez-de-chaussée, Hall A.'],
-       'porte|embarquement':['Votre porte sera affichée 45 minutes avant l\'embarquement.'],
-       'bagage|valise|perdu':['La récupération des bagages est au niveau inférieur, Hall C.'],
-     },
-     zh:{
-       '值机|柜台|在哪':['值机柜台在一楼A大厅，请按照指示牌行走。'],
-       '登机口|登机|航班':['您的登机口将在起飞前45分钟显示在出发屏幕上。'],
-       '行李|丢失':['行李提取处在下层C大厅，着陆后约20分钟可取到行李。'],
-     },
-   },
-   fb:{en:['Can I help you with anything else at the airport?','Feel free to ask about flights, gates, or any airport service!'],it:['Posso aiutarla con altro?'],es:['¿Hay algo más en lo que pueda ayudarle?'],fr:['Autre chose que je puisse faire pour vous?'],zh:['还有什么我可以帮助您的吗？']}
-  },
-  {name:'Ristorante',emoji:'🍽️',
-   op:{en:'Good evening! Welcome. Do you have a reservation?',it:'Buonasera! Benvenuto. Ha una prenotazione?',es:'¡Buenas noches! ¿Tiene reserva?',fr:'Bonsoir! Avez-vous une réservation?',zh:'晚上好！欢迎光临。请问有预订吗？'},
-   kw:{
-     en:{
-       'menu|food|eat|hungry|what.*have':['Here is our menu! Tonight\'s specials are the grilled salmon and truffle risotto — both excellent!','We have Italian, Mediterranean and fusion options. What are you in the mood for?'],
-       'book|reserv|table|seat':['Of course! For how many people and what time? I\'ll book it right away.'],
-       'bill|pay|check|receipt':['I\'ll bring your bill right away! Card or cash?','Of course — shall I split the bill?'],
-       'allerg|vegan|vegetar|gluten':['We have a full vegan menu. Just tell me your allergies and I\'ll guide you!'],
-       'wine|beer|drink|water|cocktail':['Excellent! Shall I bring drinks while you look at the menu?','Our house wine is excellent — shall I bring a glass?'],
-       'recommend|special|best|today':['Tonight I highly recommend the chef\'s sea bass — extraordinary!','Our most popular dish is the hand-made tagliatelle. Would you like to try it?'],
-       'wait|long|time':['The wait is about 15 minutes. Can I get you something to drink while you wait?'],
-     },
-     it:{
-       'menù|cibo|mangiare|fame':['Ecco il menù! Il piatto del giorno è il branzino alla griglia con verdure di stagione.'],
-       'conto|pagare|ricevuta':['Le porto subito il conto! Contanti o carta?'],
-       'prenotare|tavolo|posto':['Certo! Per quante persone e a che ora? La prenoto subito.'],
-       'vino|acqua|bere':['Ottima scelta! Porto qualcosa da bere mentre sceglie dal menù?'],
-       'consiglia|speciale|oggi':['Stasera le consiglio vivamente il branzino al forno — una bontà!'],
-     },
-   },
-   fb:{en:['I hope you\'re enjoying your meal! Anything else I can bring?','Please don\'t hesitate to call me!'],it:['Spero stia apprezzando il pasto! Posso portarle qualcos\'altro?'],es:['¡Espero que esté disfrutando! ¿Necesita algo más?'],fr:['J\'espère que vous appréciez votre repas!'],zh:['希望您用餐愉快！还需要什么吗？']}
-  },
-  {name:'Hotel',emoji:'🏨',
-   op:{en:'Good morning! Welcome to the Grand Hotel. How can I assist you?',it:'Buongiorno! Benvenuto al Grand Hotel. Come posso aiutarla?',es:'¡Buenos días! Bienvenido al Grand Hotel.',fr:'Bonjour! Bienvenue au Grand Hôtel.',zh:'早上好！欢迎来到大酒店。我能帮您什么？'},
-   kw:{
-     en:{
-       'check.?in|reserv|room|key':['May I have your name and ID, please? I\'ll find your reservation right away.'],
-       'breakfast|eat|morning':['Breakfast is served from 7 to 10:30 AM in our main restaurant on the ground floor.'],
-       'wifi|internet|password':['The Wi-Fi password is "GrandHotel2026" — enjoy your stay!'],
-       'pool|gym|spa|relax':['The pool is open until 10 PM. The spa is on level 3 — would you like to book a treatment?'],
-       'checkout|leave|bill|late':['Check-out is at noon. We can arrange a late check-out until 2 PM — shall I do that for you?'],
-       'problem|noise|broken|fix|issue':['I\'m very sorry about that! I\'ll send maintenance right away.','Let me find you another room immediately — so sorry for the inconvenience.'],
-       'luggage|bag|store':['Of course! We can store your luggage at the front desk free of charge.'],
-       'taxi|transport|airport':['I\'ll call a taxi right away. The ride to the airport is about 25 minutes.'],
-     },
-     it:{
-       'check.?in|prenotazione|camera':['Benvenuto! Posso avere il suo nome e documento d\'identità?'],
-       'colazione|mangiare|mattina':['La colazione è servita dalle 7 alle 10:30 nel ristorante principale.'],
-       'wifi|password':['La password del Wi-Fi è "GrandHotel2026". Buona permanenza!'],
-       'checkout|partire':['Il check-out è previsto per mezzogiorno. Posso prolungare fino alle 14:00 se lo desidera.'],
-       'problema|rumore|rotto':['Mi scuso! Mando subito qualcuno della manutenzione.'],
-     },
-   },
-   fb:{en:['Is there anything I can do to make your stay more comfortable?','We\'re at reception 24/7 — just call!'],it:['Posso fare altro per rendere il suo soggiorno migliore?'],es:['¿Algo más para su comodidad?'],fr:['Autre chose pour votre confort?'],zh:['有什么我可以为您做的吗？']}
-  },
-  {name:'Shopping',emoji:'🛒',
-   op:{en:'Hi! Looking for anything in particular today?',it:'Salve! Sta cercando qualcosa in particolare?',es:'¡Hola! ¿Busca algo en particular?',fr:'Bonjour! Vous cherchez quelque chose?',zh:'您好！有什么我可以帮您的吗？'},
-   kw:{
-     en:{
-       'size|fit|try|fitting':['The fitting rooms are on the right. What size are you looking for?','We have XS to XXL. Would you like to try it on?'],
-       'price|cost|how much|expensive|cheap':['This one is €49.99. We also have a sale — up to 40% off selected items!'],
-       'color|colour|other|different':['We have this in black, white, navy and red. Which do you prefer?'],
-       'pay|card|cash|apple pay':['We accept all major cards and Apple Pay!'],
-       'return|refund|exchange|receipt':['Returns accepted within 30 days with the receipt — no problem!'],
-       'recommend|popular|bestsell|best':['Our bestseller this season is this jacket — it\'s been very popular!','Most customers love our new collection — shall I show you?'],
-       'gift|wrap|present':['Of course! We offer free gift wrapping. Shall I do that for you?'],
-     },
-     it:{
-       'taglia|provare|camerino':['I camerini sono a destra. Che taglia cerca?'],
-       'prezzo|quanto|costa|sconti':['Questo costa €49.99. Abbiamo i saldi fino al 40% su articoli selezionati!'],
-       'reso|rimborso|ricevuta':['Reso accettato entro 30 giorni con lo scontrino — nessun problema!'],
-     },
-   },
-   fb:{en:['Take your time! I\'m here if you need anything.','Browse freely — happy to help anytime!'],it:['Prendasi il tempo che desidera!'],es:['¡Tómese su tiempo!'],fr:['Prenez votre temps!'],zh:['请随意浏览！']}
-  },
-  {name:'Business',emoji:'💼',
-   op:{en:'Good morning. Thank you for joining us. Shall we get started?',it:'Buongiorno. Grazie per essere qui. Iniziamo?',es:'Buenos días. Gracias por acompañarnos. ¿Empezamos?',fr:'Bonjour. Merci d\'être là. Commençons?',zh:'早上好。感谢您今天到来。我们开始吧？'},
-   kw:{
-     en:{
-       'propos|offer|deal|present':['Thank you for the proposal. We\'ll need to review the figures with our team and get back to you.','That\'s an interesting offer. Could you send the full details in writing?'],
-       'budget|price|cost|invest':['Our budget for this project is approximately €50,000. Is that within your range?'],
-       'deadline|timeline|when|launch':['We\'d like to launch by Q2. Is that achievable on your end?'],
-       'partner|collaborat|work together':['A partnership sounds very promising! Let\'s schedule a follow-up call this week.'],
-       'question|clarif|mean|explain':['Great question — let me clarify our position on that.','Could you elaborate a bit more?'],
-       'agree|deal|sign|proceed':['Excellent! We\'re happy to proceed. Shall we move to the contract stage?'],
-       'problem|issue|concern|delay':['I understand your concern. Let\'s find a solution that works for both of us.'],
-       'data|number|report|result':['According to our latest report, we\'ve seen a 20% growth in Q3. Very promising!'],
-     },
-     it:{
-       'proposta|offerta|presentazione':['Grazie per la proposta. Dovremo analizzare i dettagli con il team e farle sapere.'],
-       'budget|costo|investimento':['Il nostro budget è di circa €50.000. Rientra nel suo range?'],
-       'accordo|procedere|contratto':['Ottimo! Siamo pronti a procedere. Passiamo alla fase contrattuale?'],
-       'domanda|chiarire|spiegare':['Ottima domanda. Ecco la nostra posizione al riguardo.'],
-     },
-   },
-   fb:{en:['That\'s very interesting — could you elaborate further?','Thank you for sharing that. Let\'s keep discussing.'],it:['Molto interessante. Potrebbe approfondire?'],es:['Muy interesante. ¿Podría ampliar?'],fr:['Très intéressant! Pourriez-vous développer?'],zh:['很有意思。您能详细说明吗？']}
-  },
-  {name:'Trasporti',emoji:'🚌',
-   op:{en:'Hello! How can I help you with transport today?',it:'Salve! Come posso aiutarla con i trasporti?',es:'¡Hola! ¿En qué puedo ayudarle con el transporte?',fr:'Bonjour! Comment puis-je vous aider avec les transports?',zh:'您好！有什么交通方面的问题吗？'},
-   kw:{
-     en:{
-       'bus|tram|stop|line':['Bus 14 goes to the city centre every 10 minutes. Stop is just outside Exit B.','The tram stop is 2 minutes away. Line 3 goes directly to the main square.'],
-       'metro|subway|underground':['The metro runs until midnight. Line 2 goes directly to the airport in 20 minutes.'],
-       'train|station|platform|rail':['The next train departs at 15:42 from Platform 3.','Tickets can be bought at the machines or via the app.'],
-       'ticket|pass|price|cost|how much':['A single ticket costs €2.20. A 24-hour pass is €8 — great value!'],
-       'taxi|uber|ride|car':['Taxis are at Exit B. Average fare to the centre is about €15, or €25 to the airport.'],
-       'delay|cancel|late|strike':['Sorry — there are signal delays on Line 1. I recommend Bus 7 as an alternative.'],
-       'direction|how|get to|reach':['Take Line 2 to Central Station, then Bus 14 — about 25 minutes total.'],
-       'bike|bicycle|rent|scooter':['Bike rentals are available at the station exit — €3/hour or €10/day!'],
-     },
-     it:{
-       'autobus|tram|fermata':['L\'autobus 14 va al centro ogni 10 minuti. La fermata è fuori dall\'Uscita B.'],
-       'metro|metropolitana':['La metro chiude a mezzanotte. La Linea 2 porta direttamente in aeroporto in 20 minuti.'],
-       'treno|stazione|binario':['Il prossimo treno parte alle 15:42 dal Binario 3.'],
-       'biglietto|abbonamento|prezzo':['Un biglietto singolo costa €2,20. Un abbonamento giornaliero costa €8.'],
-       'ritardo|cancellato|sciopero':['Mi dispiace — ci sono ritardi sulla Linea 1. Consiglio l\'autobus 7 come alternativa.'],
-     },
-   },
-   fb:{en:['Any other transport questions? Happy to help!','Need directions to a specific place?'],it:['Altre domande sui trasporti?'],es:['¿Alguna otra pregunta?'],fr:['D\'autres questions?'],zh:['还有其他交通问题吗？']}
-  },
-];
-
-let curScenario=0;
-let chatMsgs=[];
-let coachRec=null,coachRecording=false,coachBest='';
-
-function selectScenario(idx,btn){
-  curScenario=idx;
-  document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
-  btn.classList.add('active');
-  resetCoach();
-}
-function resetCoach(){
-  if(coachRecording)stopCoachRec();
-  chatMsgs=[];
-  document.getElementById('chat-messages').innerHTML='';
-  initChat();
-}
-function initChat(){
-  const s=SCENARIOS[curScenario];
-  const lang=document.getElementById('coach-lang').value;
-  document.getElementById('coach-scenario-label').textContent=`${s.emoji} ${s.name}`;
-  document.getElementById('coach-title-el').textContent=`AI Coach — ${s.name}`;
-  const op=s.op[lang]||s.op.en;
-  addMsg('ai',op);
-  speak(op,lang);
-}
-function addMsg(role,text,corr){
-  const c=document.getElementById('chat-messages');
-  const d=document.createElement('div');
-  d.className=`msg ${role}`;
-  d.innerHTML=`<div class="speaker">${role==='ai'?'🤖 AI Coach':'👤 Tu'}</div>`;
-  const p=document.createElement('p');p.textContent=text;d.appendChild(p);
-  if(corr){const cc=document.createElement('div');cc.className='correction';cc.textContent=corr;d.appendChild(cc);}
-  c.appendChild(d);c.scrollTop=c.scrollHeight;
-  chatMsgs.push({role:role==='ai'?'assistant':'user',content:text});
-}
-function showTyping(){
-  const c=document.getElementById('chat-messages');
-  const d=document.createElement('div');d.className='typing-indicator';d.id='tyy';
-  d.innerHTML='<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
-  c.appendChild(d);c.scrollTop=c.scrollHeight;
-}
-function hideTyping(){const e=document.getElementById('tyy');if(e)e.remove();}
-
-// Contextual response
-function getResponse(userText,lang){
-  const s=SCENARIOS[curScenario];
-  const lower=userText.toLowerCase();
-  // Try current lang keywords first
-  const tryMap=(m)=>{
-    if(!m)return null;
-    for(const pat in m){if(new RegExp(pat,'i').test(lower)){const pool=m[pat];return pool[Math.floor(Math.random()*pool.length)];}}
-    return null;
-  };
-  return tryMap(s.kw[lang]) || tryMap(s.kw.en) || (s.fb[lang]||s.fb.en)[Math.floor(Math.random()*(s.fb[lang]||s.fb.en).length)];
-}
-
-// Grammar correction (EN only)
-function detectCorr(text,lang){
-  if(lang!=='en')return null;
-  const l=text.toLowerCase();
-  if(/\bi has\b/.test(l))return '💡 Correction: "I have" (not "I has")';
-  if(/\bhe don\'?t\b/.test(l))return '💡 Correction: "he doesn\'t" (not "he don\'t")';
-  if(/\byesterday i go\b/.test(l))return '💡 Correction: use past tense "I went" (not "I go")';
-  if(/\bmore better\b/.test(l))return '💡 Correction: say "better" (not "more better")';
-  if(/\bi am agree\b/.test(l))return '💡 Correction: say "I agree" (not "I am agree")';
-  if(/\bcan you to [a-z]/.test(l))return '💡 Correction: "can you [verb]" — no "to" needed';
-  if(/\bsince [0-9]+ (hour|day|week|month|year)/.test(l))return '💡 Correction: use "for" with time durations (e.g. "for 3 hours")';
-  if(/\bvery much like\b/.test(l))return '💡 Correction: say "really like" or "like very much"';
-  return null;
-}
-
-async function handleInput(text){
-  if(!text.trim())return;
-  const lang=document.getElementById('coach-lang').value;
-  const corr=detectCorr(text,lang);
-  addMsg('user',text);
-  showTyping();
-  document.getElementById('coach-status-title').textContent='🤔 AI sta pensando…';
-
-  // OpenAI if configured
-  if(OPENAI_API_KEY){
-    try{
-      const s=SCENARIOS[curScenario];
-      const sys=`You are a ${s.name} staff member. Respond ONLY in ${LC[lang]?.name||'English'}. Keep it to 1-3 sentences. If user made grammar mistakes, add a note at the end: (💡 Correction: ...).`;
-      const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${OPENAI_API_KEY}`},body:JSON.stringify({model:'gpt-4o-mini',messages:[{role:'system',content:sys},...chatMsgs.slice(-6),{role:'user',content:text}],max_tokens:200,temperature:0.8})});
-      const d=await r.json();
-      if(d.choices?.[0]?.message?.content){
-        const raw=d.choices[0].message.content;
-        const cm=raw.match(/\(💡[^)]+\)/);
-        hideTyping();
-        addMsg('ai',cm?raw.replace(cm[0],'').trim():raw,cm?cm[0]:corr);
-        speak(cm?raw.replace(cm[0],'').trim():raw,lang);
-        document.getElementById('coach-status-title').textContent='Pronto';
-        document.getElementById('coach-status-sub').textContent='Tocca il mic per parlare';
-        return;
-      }
-    }catch(e){console.warn('OpenAI',e);}
-  }
-
-  await new Promise(r=>setTimeout(r,800+Math.random()*700));
-  const resp=getResponse(text,lang);
-  hideTyping();
-  addMsg('ai',resp,corr);
-  speak(resp,lang);
-  document.getElementById('coach-status-title').textContent='Pronto';
-  document.getElementById('coach-status-sub').textContent='Tocca il mic per parlare';
-}
-
-// ── Coach STT ──
-function toggleCoachMic(){
-  if(coachRecording){finishCoachMic();return;}
-  startCoachMic();
-}
-function startCoachMic(){
-  unlockAudio();
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){showToast('⚠️ Speech recognition non supportato');return;}
-  const lang=document.getElementById('coach-lang').value;
-  const lc=LC[lang]||LC.en;
-  coachRecording=true;coachBest='';
-  const btn=document.getElementById('coach-voice-btn');
-  btn.classList.add('recording');
-  document.getElementById('coach-status-title').textContent='🎙️ Registrazione…';
-  document.getElementById('coach-status-sub').textContent='Parla ora (tocca di nuovo per fermare)';
-  coachRec=new SR();
-  coachRec.lang=lc.bcp;
-  coachRec.interimResults=true;
-  coachRec.continuous=true;
-  coachRec.onresult=(e)=>{
-    let interim='';
-    for(let i=e.resultIndex;i<e.results.length;i++){const t=e.results[i][0].transcript;if(e.results[i].isFinal)coachBest+=t+' ';else interim=t;}
-    const disp=(coachBest+interim).trim();
-    document.getElementById('coach-status-sub').textContent=disp||'In ascolto…';
-  };
-  coachRec.onerror=(e)=>{if(e.error!=='no-speech'&&e.error!=='aborted')showToast('❌ '+e.error);finishCoachMic();};
-  coachRec.onend=()=>{if(coachRecording){try{coachRec.start();}catch(err){finishCoachMic();}}};
-  try{coachRec.start();}catch(e){showToast('❌ Microfono non disponibile');stopCoachRec();}
-}
-function finishCoachMic(){
-  const text=coachBest.trim();
-  stopCoachRec();
-  if(text)handleInput(text);
-  else{document.getElementById('coach-status-sub').textContent='Tocca il mic per parlare';}
-}
-function stopCoachRec(){
-  coachRecording=false;
-  if(coachRec){try{coachRec.abort();}catch(e){}coachRec=null;}
-  document.getElementById('coach-voice-btn').classList.remove('recording');
-  document.getElementById('coach-status-title').textContent='Pronto';
-}
-
-// ── Init ──
+// ── Init ───────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded',()=>{
-  onLangChange('a');onLangChange('b');
-  renderAcademy('IT');
+  onLangChange('a');
+  onLangChange('b');
 });
 </script>
 </body>
