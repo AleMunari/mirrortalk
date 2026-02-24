@@ -16,6 +16,7 @@
   --blue: #4f9fff;
   --red: #ff5f7e;
   --cyan: #4ff0d0;
+  --green: #4fdf7e;
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body {
@@ -66,13 +67,19 @@ html, body {
   transition: background .2s, border-color .2s;
 }
 .txt.ph  { color: var(--muted); font-style: italic; font-size: 13px; }
-.txt.on  { background: rgba(79,159,255,0.09); border-color: rgba(79,159,255,0.4); }
+.txt.on  { background: rgba(79,223,126,0.09); border-color: rgba(79,223,126,0.4); }
 .txt.say { background: rgba(79,240,208,0.09); border-color: rgba(79,240,208,0.4); }
 .st { font-size: 12px; color: var(--cyan); display: flex; align-items: center; gap: 5px; height: 16px; flex-shrink: 0; }
 @keyframes sp { to { transform: rotate(360deg); } }
 .spin { width: 12px; height: 12px; flex-shrink: 0; border: 2px solid rgba(79,240,208,0.2); border-top-color: var(--cyan); border-radius: 50%; animation: sp .7s linear infinite; }
+
+/* Contenitore dei due bottoni affiancati */
+.btn-row {
+  display: flex; gap: 24px; align-items: center; justify-content: center; flex-shrink: 0;
+}
+
 .mic {
-  width: 94px; height: 94px; border-radius: 50%; border: none; background: transparent;
+  width: 84px; height: 84px; border-radius: 50%; border: none; background: transparent;
   cursor: pointer; position: relative; display: flex; align-items: center; justify-content: center;
   -webkit-tap-highlight-color: transparent; touch-action: manipulation; flex-shrink: 0;
 }
@@ -80,21 +87,30 @@ html, body {
 .face {
   position: absolute; inset: 0; border-radius: 50%;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 4px; font-size: 12px; font-weight: 700; color: #fff; pointer-events: none;
+  gap: 4px; font-size: 11px; font-weight: 700; color: #fff; pointer-events: none;
 }
-.face svg { width: 30px; height: 30px; }
-.mic.blu .face { background: linear-gradient(135deg,#4f9fff,#1e58cc); box-shadow: 0 5px 22px rgba(79,159,255,0.5),inset 0 0 0 1px rgba(255,255,255,0.14); }
+.face svg { width: 26px; height: 26px; }
+
+/* Verde: bottone parla */
+.mic.grn .face { background: linear-gradient(135deg,#4fdf7e,#1e8c3c); box-shadow: 0 5px 22px rgba(79,223,126,0.5),inset 0 0 0 1px rgba(255,255,255,0.14); }
+/* Rosso: bottone ascolta */
 .mic.red .face { background: linear-gradient(135deg,#ff5f7e,#a01e3c); box-shadow: 0 5px 22px rgba(255,95,126,0.5),inset 0 0 0 1px rgba(255,255,255,0.14); }
+
+/* Rosso disabilitato (nessun pending) */
+.mic.red.disabled .face { background: linear-gradient(135deg,#553040,#2a0f1a); box-shadow: 0 2px 10px rgba(0,0,0,0.3),inset 0 0 0 1px rgba(255,255,255,0.07); opacity: 0.45; }
+
 .rsvg { position: absolute; inset: -7px; width: calc(100% + 14px); height: calc(100% + 14px); pointer-events: none; transform: rotate(-90deg); }
 .rb { fill: none; stroke: rgba(255,255,255,0.07); stroke-width: 3; }
-.rf { fill: none; stroke-width: 3; stroke-linecap: round; transition: stroke-dashoffset .1s; }
-.mic.blu .rf { stroke: var(--blue); } .mic.red .rf { stroke: var(--red); }
+.rf { fill: none; stroke-width: 3; stroke-linecap: round; }
+.mic.grn .rf { stroke: var(--green); }
+.mic.red .rf  { stroke: var(--red); }
+
 @keyframes pr { 0%{transform:scale(1);opacity:.55} 100%{transform:scale(1.9);opacity:0} }
-.mic.rec::after { content:''; position:absolute; inset:-7px; border-radius:50%; border:2.5px solid currentColor; animation:pr 1.1s ease-out infinite; }
-.mic.blu.rec { color: var(--blue); } .mic.red.rec { color: var(--red); }
+.mic.rec::after { content:''; position:absolute; inset:-7px; border-radius:50%; border:2.5px solid var(--green); animation:pr 1.1s ease-out infinite; }
+
 @keyframes ps { 0%{transform:scale(1);opacity:.45} 100%{transform:scale(2.1);opacity:0} }
 .mic.tts::after { content:''; position:absolute; inset:-7px; border-radius:50%; border:2.5px solid var(--cyan); animation:ps .9s ease-out infinite; }
-.tmr { font-size: 11px; font-weight: 700; color: var(--muted); height: 14px; flex-shrink: 0; }
+
 #toast {
   position: fixed; bottom: calc(10px + env(safe-area-inset-bottom,0px));
   left: 50%; transform: translateX(-50%) translateY(12px);
@@ -126,14 +142,23 @@ html, body {
     </select>
     <div class="txt ph" id="tb">…</div>
     <div class="st" id="sb"></div>
-    <div class="tmr" id="mb"></div>
-    <button class="mic red" id="bb" onclick="tap('b')">
-      <svg class="rsvg" viewBox="0 0 108 108"><circle class="rb" cx="54" cy="54" r="50"/><circle class="rf" id="rb" cx="54" cy="54" r="50" stroke-dasharray="314" stroke-dashoffset="314"/></svg>
-      <div class="face">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>
-        <span id="nlb">Speak</span>
-      </div>
-    </button>
+    <div class="btn-row">
+      <!-- Verde: parla/stop -->
+      <button class="mic grn" id="bgb" onclick="tapRec('b')">
+        <svg class="rsvg" viewBox="0 0 108 108"><circle class="rb" cx="54" cy="54" r="50"/><circle class="rf" id="rb" cx="54" cy="54" r="50" stroke-dasharray="314" stroke-dashoffset="314"/></svg>
+        <div class="face">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>
+          <span id="nlb">Speak</span>
+        </div>
+      </button>
+      <!-- Rosso: ascolta -->
+      <button class="mic red disabled" id="bpb" onclick="tapPlay('b')">
+        <div class="face">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+          <span>Ascolta</span>
+        </div>
+      </button>
+    </div>
   </div>
 
   <div class="div">
@@ -158,14 +183,23 @@ html, body {
     </select>
     <div class="txt ph" id="ta">…</div>
     <div class="st" id="sa"></div>
-    <div class="tmr" id="ma"></div>
-    <button class="mic blu" id="ba" onclick="tap('a')">
-      <svg class="rsvg" viewBox="0 0 108 108"><circle class="rb" cx="54" cy="54" r="50"/><circle class="rf" id="ra" cx="54" cy="54" r="50" stroke-dasharray="314" stroke-dashoffset="314"/></svg>
-      <div class="face">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>
-        <span id="nla">Parla</span>
-      </div>
-    </button>
+    <div class="btn-row">
+      <!-- Verde: parla/stop -->
+      <button class="mic grn" id="bga" onclick="tapRec('a')">
+        <svg class="rsvg" viewBox="0 0 108 108"><circle class="rb" cx="54" cy="54" r="50"/><circle class="rf" id="ra" cx="54" cy="54" r="50" stroke-dasharray="314" stroke-dashoffset="314"/></svg>
+        <div class="face">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>
+          <span id="nla">Parla</span>
+        </div>
+      </button>
+      <!-- Rosso: ascolta -->
+      <button class="mic red disabled" id="bpa" onclick="tapPlay('a')">
+        <div class="face">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+          <span>Ascolta</span>
+        </div>
+      </button>
+    </div>
   </div>
 
 </div>
@@ -182,15 +216,8 @@ html, body {
   Qualsiasi await, Promise.then, o setTimeout lo blocca.
 
   SOLUZIONE ADOTTATA:
-  1. Click sul bottone → speak() chiamato SUBITO (sincrono)
-     con l'utterance già pronta (testo dell'ultima traduzione)
-  2. Mentre si parla → avvio il microfono in parallelo
-  3. Alla fine del microfono → traduco e salvo il risultato
-  4. Click successivo → riparte dal punto 1
-
-  In pratica: ogni click fa DUE cose in sequenza sincrona:
-    A) Parla la traduzione precedente (se c'è)
-    B) Avvia la registrazione per la prossima
+  - Bottone VERDE: avvia/ferma il microfono (nessun countdown)
+  - Bottone ROSSO: legge la traduzione (sincrono nel click)
 
   ⚠️  REQUISITI iOS:
   - Togliere il silenziatore fisico (interruttore laterale)
@@ -215,9 +242,19 @@ function toast(m, ms=3000) {
 
 // ══════════════════════════════════════════════════════
 // STATO — una traduzione salvata per ogni lato
-// pending[side] = { text, lang } — da leggere al prossimo click
+// pending[side] = { text, lang } — da leggere al click rosso
 // ══════════════════════════════════════════════════════
 const pending = { a: null, b: null };
+
+function setPlayReady(side, ready) {
+  const btn = $('bp'+side);
+  if (ready) {
+    btn.classList.remove('disabled');
+  } else {
+    btn.classList.add('disabled');
+    btn.classList.remove('tts');
+  }
+}
 
 // ══════════════════════════════════════════════════════
 // SPEAK — chiamato SOLO in contesto sincrono di click
@@ -245,6 +282,17 @@ function speakSync(text, langCode, btnId) {
 }
 
 // ══════════════════════════════════════════════════════
+// TAP ROSSO — ascolta la traduzione
+// ══════════════════════════════════════════════════════
+function tapPlay(side) {
+  if (!pending[side]) return; // niente da ascoltare
+  const p = pending[side];
+  pending[side] = null;
+  setPlayReady(side, false);
+  speakSync(p.text, p.lang, 'bp'+side); // sincrono nel click ✓
+}
+
+// ══════════════════════════════════════════════════════
 // TRADUZIONE
 // ══════════════════════════════════════════════════════
 async function doTranslate(text, from, to) {
@@ -266,21 +314,10 @@ async function doTranslate(text, from, to) {
 // ══════════════════════════════════════════════════════
 // MICROFONO
 // ══════════════════════════════════════════════════════
-let rec = null, rSide = null, rTimer = null, rSec = 0;
-let rFinal = '', rInterim = '', silenceTimer = null;
-const MAX_SEC = 12;
-const SILENCE_MS = 1800; // ms di silenzio prima di fermarsi
+let rec = null, rSide = null;
+let rFinal = '', rInterim = '';
 
-function tap(side) {
-  // ── STEP 1: parla SUBITO (sincrono, dentro il click) ──
-  // Se c'è una traduzione pronta per questo lato, leggila ora
-  if (pending[side]) {
-    const p = pending[side];
-    pending[side] = null;
-    speakSync(p.text, p.lang, 'b'+side); // sincrono nel click ✓
-  }
-
-  // ── STEP 2: gestisci il microfono ──
+function tapRec(side) {
   if (rSide === side) {
     stopRec(side);
     return;
@@ -299,28 +336,14 @@ function startRec(side) {
   const lang = gl(side);
   rSide = side; rFinal = ''; rInterim = '';
 
-  const btn  = $('b'+side);
+  const btn  = $('bg'+side);
   const ta   = $('t'+side);
-  const tmr  = $('m'+side);
-  const ring = $('r'+side);
   const lbl  = $('nl'+(side==='a'?'a':'b'));
 
   btn.classList.add('rec');
   lbl.textContent = '⏹';
   ta.className = 'txt on';
   ta.textContent = '🎙️ …';
-  tmr.textContent = '';
-
-  // Ring countdown (visivo)
-  rSec = MAX_SEC;
-  const C = 314;
-  ring.style.strokeDashoffset = C;
-  rTimer = setInterval(() => {
-    rSec--;
-    tmr.textContent = rSec + 's';
-    ring.style.strokeDashoffset = C - ((MAX_SEC - rSec) / MAX_SEC) * C;
-    if (rSec <= 0) stopRec(side);
-  }, 1000);
 
   rec = new SR();
   rec.lang = BCP[lang] || 'en-US';
@@ -335,17 +358,9 @@ function startRec(side) {
       else rInterim += e.results[i][0].transcript;
     }
     ta.textContent = (rFinal + rInterim).trim() || '🎙️ …';
-
-    // Rilevamento silenzio: ogni volta che arriva audio, reset il timer
-    clearTimeout(silenceTimer);
-    if (rFinal.trim()) {
-      // Ho testo finale — aspetto SILENCE_MS di silenzio poi mi fermo
-      silenceTimer = setTimeout(() => stopRec(side), SILENCE_MS);
-    }
   };
 
   rec.onerror = e => {
-    clearTimeout(silenceTimer);
     if (e.error === 'no-speech') { stopRec(side); return; }
     if (e.error !== 'aborted') toast('❌ ' + e.error);
     abortRec();
@@ -354,7 +369,7 @@ function startRec(side) {
   rec.onend = () => {
     // Su iOS con continuous=true, onend scatta se il browser chiude
     // Riavvia se siamo ancora in registrazione
-    if (rSide === side && rSec > 0 && !silenceTimer) {
+    if (rSide === side) {
       try { rec.start(); } catch(e) { stopRec(side); }
     }
   };
@@ -364,7 +379,6 @@ function startRec(side) {
 }
 
 function stopRec(side) {
-  clearTimeout(silenceTimer); silenceTimer = null;
   const text = rFinal.trim() || rInterim.trim();
   abortRec();
 
@@ -383,40 +397,36 @@ function stopRec(side) {
   oSt.innerHTML = '<div class="spin"></div>';
 
   // Traduci in background e salva il risultato in pending
-  // La riproduzione avverrà al prossimo click (sincrono)
+  // La riproduzione avverrà al click sul bottone rosso (sincrono)
   doTranslate(text, gl(side), toLang).then(out => {
     oSt.innerHTML = '';
     const final = out || text;
     oTA.className = 'txt say';
     oTA.textContent = final;
 
-    // Salva per il prossimo click
+    // Salva per il click sul rosso
     pending[other] = { text: final, lang: toLang };
+    setPlayReady(other, true);
 
     // Indica visivamente che c'è audio pronto
-    $('b'+other).classList.add('tts');
-    toast('🔊 Tocca il microfono ' + (other==='a'?'🔵':'🔴') + ' per ascoltare');
+    $('bp'+other).classList.add('tts');
+    toast('🔊 Tocca il bottone rosso ' + (other==='a'?'🔵':'🔴') + ' per ascoltare');
   });
 }
 
 function abortRec() {
-  clearInterval(rTimer); rTimer = null;
-  clearTimeout(silenceTimer); silenceTimer = null;
   if (rec) { try { rec.abort(); } catch(e) {} rec = null; }
   if (!rSide) return;
   const side = rSide; rSide = null;
   const lbl = $('nl'+(side==='a'?'a':'b'));
-  $('b'+side).classList.remove('rec');
+  $('bg'+side).classList.remove('rec');
   lbl.textContent = LBL[gl(side)] || 'Speak';
-  $('m'+side).textContent = '';
-  $('r'+side).style.strokeDashoffset = '314';
   $('t'+side).classList.remove('on');
 }
 
 // Init
 document.addEventListener('DOMContentLoaded', () => {
   onLC('a'); onLC('b');
-  // Mostra avviso mute switch all'avvio
   toast('⚠️ Verifica: interruttore laterale NON in silenzioso', 4000);
 });
 </script>
