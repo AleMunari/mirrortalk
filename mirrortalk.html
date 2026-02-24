@@ -1,0 +1,1449 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<!-- ✅ PWA iOS Meta Tags -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MirrorTalk">
+<meta name="theme-color" content="#0a0a1a">
+<title>MirrorTalk & Learn</title>
+
+<style>
+/* ===== CSS VARIABLES & RESET ===== */
+:root {
+  --bg-dark: #0a0a1a;
+  --bg-card: rgba(255,255,255,0.06);
+  --bg-card-hover: rgba(255,255,255,0.10);
+  --border: rgba(255,255,255,0.12);
+  --border-glow: rgba(255,255,255,0.25);
+  --text-primary: #f0f0ff;
+  --text-secondary: rgba(240,240,255,0.55);
+  --text-muted: rgba(240,240,255,0.3);
+  --accent-blue: #4f9fff;
+  --accent-blue-glow: rgba(79,159,255,0.35);
+  --accent-red: #ff5f7e;
+  --accent-red-glow: rgba(255,95,126,0.35);
+  --accent-cyan: #4ff0d0;
+  --accent-cyan-glow: rgba(79,240,208,0.35);
+  --accent-yellow: #ffd166;
+  --accent-yellow-glow: rgba(255,209,102,0.35);
+  --tab-h: 72px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --radius: 20px;
+  --radius-sm: 12px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  -webkit-text-size-adjust: none;
+  background: var(--bg-dark);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== APP SHELL ===== */
+#app {
+  position: fixed; inset: 0;
+  display: flex; flex-direction: column;
+  padding-top: var(--safe-top);
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(79,159,255,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 80% 90%, rgba(79,240,208,0.10) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 50% 50%, rgba(255,95,126,0.06) 0%, transparent 70%),
+    var(--bg-dark);
+}
+
+/* ===== TAB CONTENT AREA ===== */
+#content {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.tab-panel {
+  position: absolute; inset: 0;
+  display: none;
+  overflow: hidden;
+}
+.tab-panel.active { display: flex; flex-direction: column; }
+
+/* ===== BOTTOM TAB BAR ===== */
+#tabbar {
+  flex-shrink: 0;
+  height: calc(var(--tab-h) + var(--safe-bottom));
+  padding-bottom: var(--safe-bottom);
+  display: flex;
+  align-items: stretch;
+  background: rgba(10,10,26,0.85);
+  backdrop-filter: blur(24px) saturate(1.5);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  border-top: 1px solid var(--border);
+  z-index: 100;
+}
+
+.tab-btn {
+  flex: 1;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 5px;
+  background: none; border: none;
+  color: var(--text-muted);
+  font-size: 10px; font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.2s, transform 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  padding: 8px 0;
+}
+.tab-btn svg { width: 24px; height: 24px; transition: transform 0.2s, filter 0.2s; }
+.tab-btn.active { color: var(--text-primary); }
+.tab-btn.active svg { filter: drop-shadow(0 0 8px currentColor); transform: scale(1.15); }
+.tab-btn:active { transform: scale(0.92); }
+
+.tab-indicator {
+  width: 4px; height: 4px; border-radius: 50%;
+  margin-top: -2px;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.tab-btn.active .tab-indicator { background: currentColor; box-shadow: 0 0 6px currentColor; }
+
+/* ===== GLASSMORPHISM CARD ===== */
+.glass-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* ===== TAB 1: MIRROR TRANSLATE ===== */
+#tab-mirror {
+  flex-direction: column;
+}
+
+.mirror-half {
+  flex: 1;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 16px;
+  gap: 12px;
+  position: relative;
+}
+.mirror-half.top {
+  transform: rotate(180deg);
+  border-bottom: 1px solid var(--border);
+}
+
+.mirror-label {
+  position: absolute;
+  top: 10px; left: 50%; transform: translateX(-50%);
+  font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+  color: var(--text-muted); text-transform: uppercase;
+}
+.mirror-half.top .mirror-label { top: auto; bottom: 10px; }
+
+.lang-select {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 50px;
+  color: var(--text-primary);
+  font-size: 14px; font-weight: 600;
+  padding: 8px 18px;
+  outline: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  min-width: 160px;
+  text-align: center;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.lang-select:focus {
+  border-color: var(--border-glow);
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.08);
+}
+.lang-select option { background: #1a1a30; }
+
+.transcript-area {
+  width: 100%;
+  flex: 1;
+  display: flex; align-items: center; justify-content: center;
+  text-align: center;
+  padding: 12px;
+  font-size: 16px; line-height: 1.5;
+  color: var(--text-primary);
+  min-height: 60px;
+  max-height: 120px;
+  overflow-y: auto;
+}
+.transcript-area.placeholder { color: var(--text-muted); font-style: italic; font-size: 14px; }
+
+.speak-btn {
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  transition: transform 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
+}
+.speak-btn:active { transform: scale(0.9); }
+.speak-btn .btn-inner {
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 4px;
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.04em;
+  color: white;
+}
+.speak-btn .btn-icon { width: 28px; height: 28px; }
+
+.btn-a .btn-inner {
+  background: linear-gradient(135deg, #4f9fff, #2d6bdd);
+  box-shadow: 0 4px 20px rgba(79,159,255,0.5), 0 0 0 1px rgba(255,255,255,0.15) inset;
+}
+.btn-b .btn-inner {
+  background: linear-gradient(135deg, #ff5f7e, #c03050);
+  box-shadow: 0 4px 20px rgba(255,95,126,0.5), 0 0 0 1px rgba(255,255,255,0.15) inset;
+}
+
+/* Recording pulse animation */
+@keyframes pulse-ring {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+.speak-btn.recording::after {
+  content: '';
+  position: absolute; inset: -4px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  animation: pulse-ring 1.2s ease-out infinite;
+}
+.btn-a.recording { color: var(--accent-blue); }
+.btn-b.recording { color: var(--accent-red); }
+
+/* ===== TAB 2: ACADEMY ===== */
+#tab-academy {
+  overflow: hidden;
+}
+
+.academy-header {
+  padding: 20px 20px 12px;
+  flex-shrink: 0;
+}
+.academy-header h1 {
+  font-size: 26px; font-weight: 800;
+  background: linear-gradient(90deg, var(--text-primary), var(--accent-cyan));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.academy-header p { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+
+.lang-tabs {
+  display: flex; gap: 8px;
+  padding: 0 20px 12px;
+  flex-shrink: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.lang-tabs::-webkit-scrollbar { display: none; }
+
+.lang-tab {
+  flex-shrink: 0;
+  padding: 8px 20px;
+  border-radius: 50px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 13px; font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.lang-tab.active {
+  color: white;
+  border-color: transparent;
+}
+.lang-tab[data-lang="IT"].active { background: linear-gradient(135deg,#4fcfff,#2290cc); box-shadow: 0 4px 16px rgba(79,207,255,0.4); }
+.lang-tab[data-lang="EN"].active { background: linear-gradient(135deg,#4f9fff,#2d6bdd); box-shadow: 0 4px 16px rgba(79,159,255,0.4); }
+.lang-tab[data-lang="ES"].active { background: linear-gradient(135deg,#ff5f7e,#c03050); box-shadow: 0 4px 16px rgba(255,95,126,0.4); }
+.lang-tab[data-lang="FR"].active { background: linear-gradient(135deg,#ffd166,#e0922a); box-shadow: 0 4px 16px rgba(255,209,102,0.4); color: #1a1a00; }
+
+.modules-scroll {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 16px calc(16px + var(--safe-bottom));
+  scrollbar-width: none;
+}
+.modules-scroll::-webkit-scrollbar { display: none; }
+
+.module-section { margin-bottom: 20px; }
+.module-title {
+  font-size: 11px; font-weight: 800;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 10px; padding-left: 4px;
+}
+
+.lesson-card {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.lesson-card:active { transform: scale(0.98); background: var(--bg-card-hover); }
+
+.lesson-num {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 800;
+  flex-shrink: 0;
+}
+.lesson-num.done { background: rgba(79,240,208,0.15); color: var(--accent-cyan); }
+.lesson-num.locked { background: rgba(255,255,255,0.05); color: var(--text-muted); }
+.lesson-num.unlocked { background: rgba(79,159,255,0.15); color: var(--accent-blue); }
+
+.lesson-info { flex: 1; min-width: 0; }
+.lesson-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.progress-bar {
+  height: 3px; border-radius: 2px;
+  background: rgba(255,255,255,0.08);
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%; border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+.lesson-pct { font-size: 11px; color: var(--text-muted); flex-shrink: 0; }
+
+/* ===== TAB 3: AI COACH ===== */
+#tab-coach {
+  overflow: hidden;
+}
+
+.coach-header {
+  padding: 20px 20px 16px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+}
+.coach-scenario-title {
+  font-size: 13px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--accent-cyan);
+  margin-bottom: 4px;
+}
+.coach-title {
+  font-size: 22px; font-weight: 800;
+  background: linear-gradient(90deg, #fff, var(--accent-blue));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+
+.scenario-pills {
+  display: flex; gap: 8px;
+  padding: 12px 20px;
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; flex-shrink: 0;
+}
+.scenario-pills::-webkit-scrollbar { display: none; }
+.pill {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border-radius: 50px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  font-size: 12px; font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.pill.active {
+  background: linear-gradient(135deg,rgba(79,159,255,0.25),rgba(79,240,208,0.15));
+  border-color: rgba(79,159,255,0.5);
+  color: var(--text-primary);
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding: 16px 16px 8px;
+  display: flex; flex-direction: column; gap: 12px;
+  scrollbar-width: none;
+}
+.chat-messages::-webkit-scrollbar { display: none; }
+
+.msg {
+  max-width: 80%;
+  padding: 12px 16px;
+  border-radius: 18px;
+  font-size: 15px; line-height: 1.5;
+  animation: msgIn 0.3s ease;
+}
+@keyframes msgIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.msg.ai {
+  background: linear-gradient(135deg,rgba(79,159,255,0.15),rgba(79,240,208,0.10));
+  border: 1px solid rgba(79,159,255,0.25);
+  border-bottom-left-radius: 4px;
+  align-self: flex-start;
+}
+.msg.user {
+  background: linear-gradient(135deg,rgba(255,255,255,0.10),rgba(255,255,255,0.07));
+  border: 1px solid var(--border);
+  border-bottom-right-radius: 4px;
+  align-self: flex-end;
+}
+.msg .correction {
+  font-size: 12px; color: var(--accent-yellow);
+  margin-top: 6px; font-style: italic;
+}
+.msg .speaker { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; margin-bottom: 5px; color: var(--accent-cyan); }
+
+.typing-indicator {
+  display: flex; gap: 4px; align-items: center;
+  padding: 14px 16px;
+  background: linear-gradient(135deg,rgba(79,159,255,0.10),rgba(79,240,208,0.07));
+  border: 1px solid rgba(79,159,255,0.2);
+  border-radius: 18px; border-bottom-left-radius: 4px;
+  align-self: flex-start;
+  max-width: 80px;
+}
+.typing-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent-blue);
+  animation: bounce 1.2s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes bounce {
+  0%,60%,100% { transform: translateY(0); }
+  30% { transform: translateY(-6px); }
+}
+
+.coach-input-area {
+  flex-shrink: 0;
+  padding: 12px 16px;
+  padding-bottom: calc(12px + var(--safe-bottom));
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px;
+}
+
+.coach-lang-select {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-size: 13px; font-weight: 600;
+  padding: 10px 12px;
+  outline: none; -webkit-appearance: none;
+  cursor: pointer; flex-shrink: 0;
+}
+.coach-lang-select option { background: #1a1a30; }
+
+.coach-voice-btn {
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  border: none; cursor: pointer;
+  background: linear-gradient(135deg,#4f9fff,#4ff0d0);
+  box-shadow: 0 4px 16px rgba(79,159,255,0.5);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.15s, box-shadow 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.coach-voice-btn:active { transform: scale(0.9); }
+.coach-voice-btn.recording {
+  background: linear-gradient(135deg,#ff5f7e,#ff9a5c);
+  box-shadow: 0 4px 16px rgba(255,95,126,0.5);
+  animation: pulse-glow 1s ease-in-out infinite alternate;
+}
+@keyframes pulse-glow {
+  from { box-shadow: 0 4px 16px rgba(255,95,126,0.4); }
+  to   { box-shadow: 0 4px 30px rgba(255,95,126,0.8); }
+}
+.coach-voice-btn svg { width: 22px; height: 22px; color: white; }
+
+.coach-status {
+  flex: 1;
+  font-size: 13px; color: var(--text-secondary);
+  line-height: 1.3;
+}
+.coach-status strong { color: var(--text-primary); display: block; }
+
+/* ===== LESSON MODAL ===== */
+#lesson-modal {
+  display: none;
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(10,10,26,0.95);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  flex-direction: column;
+  padding: var(--safe-top) 0 var(--safe-bottom);
+  animation: slideUp 0.35s cubic-bezier(0.2,0,0,1);
+}
+#lesson-modal.open { display: flex; }
+@keyframes slideUp {
+  from { transform: translateY(40px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.modal-close {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  font-size: 18px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+}
+.modal-title { font-size: 18px; font-weight: 800; }
+.modal-body {
+  flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding: 24px 20px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+.phrase-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+}
+.phrase-target { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+.phrase-translation { font-size: 14px; color: var(--text-secondary); }
+.phrase-listen-btn {
+  margin-top: 10px;
+  padding: 8px 16px; border-radius: 50px;
+  border: 1px solid var(--border);
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+  font-size: 12px; font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ===== TOAST ===== */
+#toast {
+  position: fixed; bottom: calc(var(--tab-h) + var(--safe-bottom) + 12px);
+  left: 50%; transform: translateX(-50%) translateY(20px);
+  background: rgba(30,30,50,0.95);
+  border: 1px solid var(--border-glow);
+  border-radius: 50px;
+  padding: 10px 20px;
+  font-size: 13px; font-weight: 600;
+  color: var(--text-primary);
+  z-index: 300;
+  opacity: 0;
+  transition: opacity 0.3s, transform 0.3s;
+  pointer-events: none;
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  white-space: nowrap;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ===== LOADING SHIMMER ===== */
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to   { background-position: 200% 0; }
+}
+.shimmer {
+  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.05) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div id="content">
+
+    <!-- ===== TAB 1: MIRROR TRANSLATE ===== -->
+    <div id="tab-mirror" class="tab-panel active">
+
+      <!-- TOP HALF (Utente B, ruotata) -->
+      <div class="mirror-half top" id="half-b">
+        <div class="mirror-label" id="label-b">UTENTE B</div>
+        <select class="lang-select" id="lang-b" onchange="onLangChange('b')">
+          <option value="it">🇮🇹 Italiano</option>
+          <option value="en" selected>🇬🇧 English</option>
+          <option value="es">🇪🇸 Español</option>
+          <option value="fr">🇫🇷 Français</option>
+        </select>
+        <div class="transcript-area placeholder" id="transcript-b">Translation will appear here…</div>
+        <button class="speak-btn btn-b" id="btn-b" onclick="toggleMicMirror('b')">
+          <div class="btn-inner">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/>
+            </svg>
+            <span id="btn-b-label">Speak</span>
+          </div>
+        </button>
+      </div>
+
+      <!-- DIVIDER LINE -->
+      <div style="height:1px;background:var(--border);flex-shrink:0;"></div>
+
+      <!-- BOTTOM HALF (Utente A) -->
+      <div class="mirror-half" id="half-a">
+        <div class="mirror-label" id="label-a">UTENTE A</div>
+        <select class="lang-select" id="lang-a" onchange="onLangChange('a')">
+          <option value="it" selected>🇮🇹 Italiano</option>
+          <option value="en">🇬🇧 English</option>
+          <option value="es">🇪🇸 Español</option>
+          <option value="fr">🇫🇷 Français</option>
+        </select>
+        <div class="transcript-area placeholder" id="transcript-a">La traduzione apparirà qui…</div>
+        <button class="speak-btn btn-a" id="btn-a" onclick="toggleMicMirror('a')">
+          <div class="btn-inner">
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/>
+            </svg>
+            <span id="btn-a-label">Parla</span>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== TAB 2: ACADEMY ===== -->
+    <div id="tab-academy" class="tab-panel">
+      <div class="academy-header">
+        <h1>Academy</h1>
+        <p>Scegli una lingua e inizia le micro-lezioni</p>
+      </div>
+      <div class="lang-tabs" id="academy-lang-tabs">
+        <button class="lang-tab active" data-lang="IT" onclick="selectAcademyLang('IT',this)">🇮🇹 Italiano</button>
+        <button class="lang-tab" data-lang="EN" onclick="selectAcademyLang('EN',this)">🇬🇧 English</button>
+        <button class="lang-tab" data-lang="ES" onclick="selectAcademyLang('ES',this)">🇪🇸 Español</button>
+        <button class="lang-tab" data-lang="FR" onclick="selectAcademyLang('FR',this)">🇫🇷 Français</button>
+      </div>
+      <div class="modules-scroll" id="modules-scroll"></div>
+    </div>
+
+    <!-- ===== TAB 3: AI COACH ===== -->
+    <div id="tab-coach" class="tab-panel">
+      <div class="coach-header">
+        <div class="coach-scenario-title" id="coach-scenario-label">🎯 Scenario</div>
+        <div class="coach-title" id="coach-title-el">AI Language Coach</div>
+      </div>
+      <div class="scenario-pills" id="scenario-pills">
+        <button class="pill active" onclick="selectScenario(0,this)">✈️ Aeroporto</button>
+        <button class="pill" onclick="selectScenario(1,this)">🍽️ Ristorante</button>
+        <button class="pill" onclick="selectScenario(2,this)">🏨 Hotel</button>
+        <button class="pill" onclick="selectScenario(3,this)">🛒 Shopping</button>
+        <button class="pill" onclick="selectScenario(4,this)">💼 Business</button>
+        <button class="pill" onclick="selectScenario(5,this)">🚌 Trasporti</button>
+      </div>
+      <div class="chat-messages" id="chat-messages"></div>
+      <div class="coach-input-area">
+        <select class="coach-lang-select" id="coach-lang">
+          <option value="en">🇬🇧 EN</option>
+          <option value="es">🇪🇸 ES</option>
+          <option value="fr">🇫🇷 FR</option>
+          <option value="it">🇮🇹 IT</option>
+        </select>
+        <div class="coach-status">
+          <strong id="coach-status-title">Pronto</strong>
+          <span id="coach-status-sub">Tocca il mic per parlare</span>
+        </div>
+        <button class="coach-voice-btn" id="coach-voice-btn" onclick="toggleCoachMic()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+  </div><!-- #content -->
+
+  <!-- ===== BOTTOM TAB BAR ===== -->
+  <div id="tabbar">
+    <button class="tab-btn active" id="tabBtn-mirror" style="color:var(--accent-blue);" onclick="switchTab('mirror',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="3"/><line x1="3" y1="12" x2="21" y2="12"/>
+        <path d="M9 8h6M9 16h6"/>
+      </svg>
+      Mirror
+      <div class="tab-indicator"></div>
+    </button>
+    <button class="tab-btn" id="tabBtn-academy" style="color:var(--accent-cyan);" onclick="switchTab('academy',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+      </svg>
+      Academy
+      <div class="tab-indicator"></div>
+    </button>
+    <button class="tab-btn" id="tabBtn-coach" style="color:var(--accent-red);" onclick="switchTab('coach',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="8" r="5"/>
+        <path d="M12 13c-5.33 0-8 2.67-8 4v1h16v-1c0-1.33-2.67-4-8-4z"/>
+        <circle cx="19" cy="8" r="3" fill="currentColor" opacity=".5"/>
+        <path d="M19 5v6M16 8h6" stroke="currentColor" stroke-width="1.5"/>
+      </svg>
+      AI Coach
+      <div class="tab-indicator"></div>
+    </button>
+  </div>
+</div>
+
+<!-- ===== LESSON MODAL ===== -->
+<div id="lesson-modal">
+  <div class="modal-header">
+    <div>
+      <div class="coach-scenario-title" id="modal-module-label">Modulo</div>
+      <div class="modal-title" id="modal-lesson-title">Lezione</div>
+    </div>
+    <button class="modal-close" onclick="closeModal()">✕</button>
+  </div>
+  <div class="modal-body" id="modal-body"></div>
+</div>
+
+<!-- ===== TOAST ===== -->
+<div id="toast"></div>
+
+<script>
+/* ============================================================
+   MIRRORTALK & LEARN — Main JS
+   ============================================================
+
+   🔑 API KEY INSERTION POINTS:
+   - Search for "DEEPL_API_KEY" to add your DeepL key
+   - Search for "OPENAI_API_KEY" to add your OpenAI key
+   ============================================================ */
+
+'use strict';
+
+// ── Audio context unlock (iOS Safari requires user gesture) ──
+let audioCtx = null;
+function unlockAudio() {
+  if (!audioCtx) {
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const buf = audioCtx.createBuffer(1, 1, 22050);
+      const src = audioCtx.createBufferSource();
+      src.buffer = buf; src.connect(audioCtx.destination); src.start(0);
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    } catch(e) {}
+  }
+  // Warm up speechSynthesis
+  if (window.speechSynthesis) {
+    const u = new SpeechSynthesisUtterance('');
+    window.speechSynthesis.speak(u);
+  }
+  document.removeEventListener('touchstart', unlockAudio);
+  document.removeEventListener('click', unlockAudio);
+}
+document.addEventListener('touchstart', unlockAudio, { once: true });
+document.addEventListener('click', unlockAudio, { once: true });
+
+// ── Prevent scroll / zoom ──
+document.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+document.addEventListener('gesturestart', e => e.preventDefault(), { passive: false });
+
+// ──────────────────────────────────────────────────────────────
+// TAB NAVIGATION
+// ──────────────────────────────────────────────────────────────
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'academy') renderAcademy(currentAcademyLang);
+  if (name === 'coach' && chatMessages.length === 0) initCoachChat();
+}
+
+// ──────────────────────────────────────────────────────────────
+// TOAST
+// ──────────────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ──────────────────────────────────────────────────────────────
+// LANGUAGE CONFIG
+// ──────────────────────────────────────────────────────────────
+const LANG_CONFIG = {
+  it: { speak:'Parla', stop:'Stop', translating:'Traduzione...', bcp:'it-IT', name:'Italiano', flag:'🇮🇹' },
+  en: { speak:'Speak', stop:'Stop', translating:'Translating...', bcp:'en-US', name:'English',  flag:'🇬🇧' },
+  es: { speak:'Hablar', stop:'Stop', translating:'Traduciendo...', bcp:'es-ES', name:'Español', flag:'🇪🇸' },
+  fr: { speak:'Parler', stop:'Stop', translating:'Traduction...', bcp:'fr-FR', name:'Français', flag:'🇫🇷' },
+};
+
+function getLang(side) {
+  return document.getElementById('lang-' + side).value;
+}
+
+function onLangChange(side) {
+  const lc = LANG_CONFIG[getLang(side)];
+  const btnLabel = document.getElementById('btn-' + side + '-label');
+  if (btnLabel) btnLabel.textContent = lc.speak;
+}
+
+// ──────────────────────────────────────────────────────────────
+// TRANSLATION ENGINE
+// ──────────────────────────────────────────────────────────────
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   🔑 DEEPL API — inserisci la tua chiave DeepL qui
+   const DEEPL_API_KEY = 'YOUR_DEEPL_API_KEY_HERE';
+   const DEEPL_API_URL = 'https://api-free.deepl.com/v2/translate'; (free tier)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+const DEEPL_API_KEY = null; // ← inserisci qui la tua chiave DeepL
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   🔑 OPENAI API — inserisci la tua chiave OpenAI qui
+   const OPENAI_API_KEY = 'YOUR_OPENAI_API_KEY_HERE';
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+const OPENAI_API_KEY = null; // ← inserisci qui la tua chiave OpenAI
+
+// DEEPL language codes mapping
+const DEEPL_CODES = { it:'IT', en:'EN', es:'ES', fr:'FR' };
+
+async function translateText(text, fromLang, toLang) {
+  if (fromLang === toLang) return text;
+
+  // ── Prova DeepL se configurato ──
+  if (DEEPL_API_KEY) {
+    try {
+      const res = await fetch('https://api-free.deepl.com/v2/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          auth_key: DEEPL_API_KEY,
+          text,
+          source_lang: DEEPL_CODES[fromLang],
+          target_lang: DEEPL_CODES[toLang],
+        })
+      });
+      const data = await res.json();
+      if (data.translations?.[0]?.text) return data.translations[0].text;
+    } catch(e) { console.warn('DeepL error', e); }
+  }
+
+  // ── Fallback: dizionario locale (demo) ──
+  return localTranslate(text, fromLang, toLang);
+}
+
+// Demo translations dictionary for offline/no-key mode
+const LOCAL_DICT = {
+  'it-en': { 'ciao':'Hello!', 'come stai':'How are you?', 'grazie':'Thank you!', 'buongiorno':'Good morning!', 'arrivederci':'Goodbye!', 'per favore':'Please', 'scusa':'Sorry', 'dov\'è':'Where is', 'quanto costa':'How much does it cost?', 'aiuto':'Help!' },
+  'it-es': { 'ciao':'¡Hola!', 'come stai':'¿Cómo estás?', 'grazie':'¡Gracias!', 'buongiorno':'¡Buenos días!', 'arrivederci':'¡Adiós!' },
+  'it-fr': { 'ciao':'Bonjour!', 'come stai':'Comment vas-tu?', 'grazie':'Merci!', 'buongiorno':'Bonjour!', 'arrivederci':'Au revoir!' },
+  'en-it': { 'hello':'Ciao!', 'how are you':'Come stai?', 'thank you':'Grazie!', 'good morning':'Buongiorno!', 'goodbye':'Arrivederci!', 'please':'Per favore', 'sorry':'Scusa', 'help':'Aiuto!' },
+  'en-es': { 'hello':'¡Hola!', 'how are you':'¿Cómo estás?', 'thank you':'¡Gracias!', 'good morning':'¡Buenos días!', 'goodbye':'¡Adiós!' },
+  'en-fr': { 'hello':'Bonjour!', 'how are you':'Comment allez-vous?', 'thank you':'Merci!', 'good morning':'Bonjour!', 'goodbye':'Au revoir!' },
+  'es-it': { 'hola':'Ciao!', 'gracias':'Grazie!', 'buenos días':'Buongiorno!', 'adiós':'Arrivederci!', 'por favor':'Per favore' },
+  'fr-it': { 'bonjour':'Ciao!', 'merci':'Grazie!', 'au revoir':'Arrivederci!', 's\'il vous plaît':'Per favore' },
+};
+
+function localTranslate(text, from, to) {
+  const key = `${from}-${to}`;
+  const dict = LOCAL_DICT[key] || {};
+  const lower = text.toLowerCase().trim();
+  return dict[lower] || `[${text}]`;
+}
+
+// ──────────────────────────────────────────────────────────────
+// TEXT-TO-SPEECH
+// ──────────────────────────────────────────────────────────────
+function speak(text, lang) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = LANG_CONFIG[lang]?.bcp || lang;
+  u.rate = 0.95; u.pitch = 1.05;
+  // Pick best voice available
+  const voices = window.speechSynthesis.getVoices();
+  const match = voices.find(v => v.lang.startsWith(u.lang.substring(0,2)));
+  if (match) u.voice = match;
+  window.speechSynthesis.speak(u);
+}
+
+// ──────────────────────────────────────────────────────────────
+// SPEECH-TO-TEXT (Mirror Tab)
+// ──────────────────────────────────────────────────────────────
+let mirrorRecognition = null;
+let mirrorActiveSide = null;
+
+function toggleMicMirror(side) {
+  if (mirrorActiveSide === side) { stopMirrorMic(); return; }
+  if (mirrorActiveSide) { stopMirrorMic(); }
+  startMirrorMic(side);
+}
+
+function startMirrorMic(side) {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) { showToast('⚠️ Speech recognition non disponibile'); return; }
+
+  const from = getLang(side);
+  const lc = LANG_CONFIG[from];
+  const btn = document.getElementById('btn-' + side);
+  const btnLabel = document.getElementById('btn-' + side + '-label');
+
+  mirrorRecognition = new SpeechRecognition();
+  mirrorRecognition.lang = lc.bcp;
+  mirrorRecognition.interimResults = true;
+  mirrorRecognition.continuous = false;
+
+  mirrorActiveSide = side;
+  btn.classList.add('recording');
+  btnLabel.textContent = lc.stop;
+
+  const transcriptEl = document.getElementById('transcript-' + side);
+  transcriptEl.classList.remove('placeholder');
+
+  mirrorRecognition.onresult = async (e) => {
+    const last = e.results[e.results.length - 1];
+    const text = last[0].transcript;
+    transcriptEl.textContent = text;
+
+    if (last.isFinal) {
+      const otherSide = side === 'a' ? 'b' : 'a';
+      const toLang = getLang(otherSide);
+      const otherTranscript = document.getElementById('transcript-' + otherSide);
+      otherTranscript.classList.remove('placeholder');
+      otherTranscript.textContent = lc.translating;
+
+      const translated = await translateText(text, from, toLang);
+      otherTranscript.textContent = translated;
+      speak(translated, toLang);
+      stopMirrorMic();
+    }
+  };
+  mirrorRecognition.onerror = (e) => {
+    console.warn('STT error:', e.error);
+    showToast('❌ Errore microfono: ' + e.error);
+    stopMirrorMic();
+  };
+  mirrorRecognition.onend = () => stopMirrorMic();
+  mirrorRecognition.start();
+}
+
+function stopMirrorMic() {
+  if (mirrorRecognition) { try { mirrorRecognition.stop(); } catch(e){} mirrorRecognition = null; }
+  if (mirrorActiveSide) {
+    const side = mirrorActiveSide;
+    const from = getLang(side);
+    const lc = LANG_CONFIG[from];
+    document.getElementById('btn-' + side).classList.remove('recording');
+    document.getElementById('btn-' + side + '-label').textContent = lc.speak;
+    mirrorActiveSide = null;
+  }
+}
+
+// ──────────────────────────────────────────────────────────────
+// ACADEMY DATA — 50 micro-lezioni × 4 lingue × 5 moduli
+// ──────────────────────────────────────────────────────────────
+
+const MODULES = ['Base', 'Travel', 'Social', 'Business', 'Mastery'];
+const MODULE_ICONS = ['🔤', '✈️', '💬', '💼', '🏆'];
+
+// Color per lingua
+const LANG_COLORS = {
+  IT: { fill:'#4fcfff', bar:'linear-gradient(90deg,#4fcfff,#2290cc)' },
+  EN: { fill:'#4f9fff', bar:'linear-gradient(90deg,#4f9fff,#2d6bdd)' },
+  ES: { fill:'#ff5f7e', bar:'linear-gradient(90deg,#ff5f7e,#c03050)' },
+  FR: { fill:'#ffd166', bar:'linear-gradient(90deg,#ffd166,#e0922a)' },
+};
+
+// Lezioni per modulo (10 per modulo × 5 moduli = 50)
+const LESSONS_DATA = {
+  EN: {
+    Base: [
+      { title:'Greetings & Introductions',  phrases:[{t:'Hello, my name is…',tr:'Ciao, mi chiamo…'},{t:'Nice to meet you!',tr:'Piacere di conoscerti!'},{t:'How are you?',tr:'Come stai?'},{t:'I\'m fine, thank you.',tr:'Sto bene, grazie.'}] },
+      { title:'Numbers 1–20',               phrases:[{t:'One, two, three',tr:'Uno, due, tre'},{t:'How many? – Ten.',tr:'Quanti? – Dieci.'},{t:'I need five tickets.',tr:'Ho bisogno di cinque biglietti.'}] },
+      { title:'Days & Months',              phrases:[{t:'Today is Monday.',tr:'Oggi è lunedì.'},{t:'The meeting is in January.',tr:'La riunione è a gennaio.'}] },
+      { title:'Colors & Shapes',            phrases:[{t:'The sky is blue.',tr:'Il cielo è blu.'},{t:'A round table.',tr:'Un tavolo rotondo.'}] },
+      { title:'Family Members',             phrases:[{t:'This is my mother.',tr:'Questa è mia madre.'},{t:'I have two brothers.',tr:'Ho due fratelli.'}] },
+      { title:'Food & Drinks – Basics',     phrases:[{t:'I\'d like water, please.',tr:'Vorrei dell\'acqua, per favore.'},{t:'Do you have vegetarian options?',tr:'Avete opzioni vegetariane?'}] },
+      { title:'Common Verbs – Present',     phrases:[{t:'I go to school.',tr:'Vado a scuola.'},{t:'She reads every day.',tr:'Lei legge ogni giorno.'}] },
+      { title:'Asking Simple Questions',    phrases:[{t:'Where is the bathroom?',tr:'Dov\'è il bagno?'},{t:'What time is it?',tr:'Che ore sono?'}] },
+      { title:'Adjectives – Describing',    phrases:[{t:'The weather is beautiful.',tr:'Il tempo è bello.'},{t:'This book is very interesting.',tr:'Questo libro è molto interessante.'}] },
+      { title:'Telling the Time',           phrases:[{t:'It\'s half past three.',tr:'Sono le tre e mezza.'},{t:'The train leaves at 9 AM.',tr:'Il treno parte alle 9 di mattina.'}] },
+    ],
+    Travel: [
+      { title:'At the Airport',             phrases:[{t:'Where is check-in?',tr:'Dov\'è il check-in?'},{t:'My flight is delayed.',tr:'Il mio volo è in ritardo.'},{t:'I\'d like a window seat.',tr:'Vorrei un posto vicino al finestrino.'}] },
+      { title:'Booking a Hotel',            phrases:[{t:'I have a reservation.',tr:'Ho una prenotazione.'},{t:'Can I check in early?',tr:'Posso fare il check-in prima?'}] },
+      { title:'Public Transport',           phrases:[{t:'Which bus goes to the center?',tr:'Quale autobus va al centro?'},{t:'A single ticket, please.',tr:'Un biglietto di sola andata, per favore.'}] },
+      { title:'Directions',                 phrases:[{t:'Turn left at the traffic light.',tr:'Giri a sinistra al semaforo.'},{t:'It\'s 10 minutes on foot.',tr:'Sono 10 minuti a piedi.'}] },
+      { title:'At the Restaurant',          phrases:[{t:'A table for two, please.',tr:'Un tavolo per due, per favore.'},{t:'The bill, please.',tr:'Il conto, per favore.'}] },
+      { title:'Shopping',                   phrases:[{t:'How much does this cost?',tr:'Quanto costa questo?'},{t:'Do you have it in a different size?',tr:'Lo avete in una taglia diversa?'}] },
+      { title:'Emergencies Abroad',         phrases:[{t:'Call the police!',tr:'Chiami la polizia!'},{t:'I need a doctor.',tr:'Ho bisogno di un medico.'}] },
+      { title:'Currency & Payments',        phrases:[{t:'Do you accept credit cards?',tr:'Accettate carte di credito?'},{t:'Can I pay in euros?',tr:'Posso pagare in euro?'}] },
+      { title:'Sightseeing',                phrases:[{t:'What time does the museum open?',tr:'A che ora apre il museo?'},{t:'Is there a guided tour?',tr:'C\'è una visita guidata?'}] },
+      { title:'Customs & Passport Control', phrases:[{t:'I\'m here on holiday.',tr:'Sono qui in vacanza.'},{t:'I have nothing to declare.',tr:'Non ho nulla da dichiarare.'}] },
+    ],
+    Social: [
+      { title:'Small Talk',                 phrases:[{t:'What a lovely day!',tr:'Che bella giornata!'},{t:'Do you come here often?',tr:'Vieni spesso qui?'}] },
+      { title:'Compliments',                phrases:[{t:'You look great today!',tr:'Oggi hai un aspetto fantastico!'},{t:'That\'s an excellent idea.',tr:'È un\'idea eccellente.'}] },
+      { title:'Invitations',                phrases:[{t:'Would you like to join us?',tr:'Vuoi unirsi a noi?'},{t:'Let\'s meet for coffee.',tr:'Incontriamoci per un caffè.'}] },
+      { title:'Talking About Hobbies',      phrases:[{t:'I love hiking.',tr:'Adoro fare escursioni.'},{t:'In my free time I paint.',tr:'Nel tempo libero dipingo.'}] },
+      { title:'Expressing Opinions',        phrases:[{t:'In my opinion…',tr:'A mio avviso…'},{t:'I totally agree with you.',tr:'Sono pienamente d\'accordo con te.'}] },
+      { title:'Apologies & Excuses',        phrases:[{t:'I\'m so sorry, I didn\'t mean it.',tr:'Mi dispiace tanto, non volevo.'},{t:'No worries at all.',tr:'Nessun problema.'}] },
+      { title:'Giving Advice',              phrases:[{t:'You should try this restaurant.',tr:'Dovresti provare questo ristorante.'},{t:'If I were you, I\'d ask for help.',tr:'Se fossi in te, chiederei aiuto.'}] },
+      { title:'Talking About Plans',        phrases:[{t:'I\'m planning to visit Italy.',tr:'Ho in programma di visitare l\'Italia.'},{t:'We\'re going out this evening.',tr:'Usciamo questa sera.'}] },
+      { title:'Discussing Movies & Music',  phrases:[{t:'Have you seen the latest film?',tr:'Hai visto l\'ultimo film?'},{t:'I\'m obsessed with this song!',tr:'Sono ossessionato da questa canzone!'}] },
+      { title:'Social Media Phrases',       phrases:[{t:'Follow me on Instagram.',tr:'Seguimi su Instagram.'},{t:'Check out my latest post.',tr:'Guarda il mio ultimo post.'}] },
+    ],
+    Business: [
+      { title:'Introductions at Work',      phrases:[{t:'Let me introduce myself.',tr:'Mi permetta di presentarmi.'},{t:'I work in the marketing department.',tr:'Lavoro nel reparto marketing.'}] },
+      { title:'Meetings & Agendas',         phrases:[{t:'Shall we begin?',tr:'Possiamo cominciare?'},{t:'The main point on the agenda is…',tr:'Il punto principale all\'ordine del giorno è…'}] },
+      { title:'Emails & Correspondence',    phrases:[{t:'I\'m writing to enquire about…',tr:'Scrivo per informarmi riguardo a…'},{t:'Please find attached the report.',tr:'In allegato trova il rapporto.'}] },
+      { title:'Negotiations',               phrases:[{t:'We\'d like to propose a discount.',tr:'Vorremmo proporre uno sconto.'},{t:'That seems fair to us.',tr:'Ci sembra giusto.'}] },
+      { title:'Presentations',              phrases:[{t:'Today I\'ll be talking about…',tr:'Oggi parlerò di…'},{t:'As you can see in this slide…',tr:'Come potete vedere in questa diapositiva…'}] },
+      { title:'Talking About Data',         phrases:[{t:'Revenue increased by 15%.',tr:'I ricavi sono aumentati del 15%.'},{t:'The trend is positive.',tr:'Il trend è positivo.'}] },
+      { title:'Problem Solving at Work',    phrases:[{t:'There seems to be an issue.',tr:'Sembra esserci un problema.'},{t:'How can we resolve this?',tr:'Come possiamo risolvere questo?'}] },
+      { title:'Networking Events',          phrases:[{t:'Here\'s my business card.',tr:'Ecco il mio biglietto da visita.'},{t:'Let\'s stay in touch.',tr:'Rimaniamo in contatto.'}] },
+      { title:'HR & Interviews',            phrases:[{t:'Tell me about your experience.',tr:'Mi parli della sua esperienza.'},{t:'What are your strengths?',tr:'Quali sono i suoi punti di forza?'}] },
+      { title:'Remote Work Phrases',        phrases:[{t:'Can everyone see my screen?',tr:'Tutti riescono a vedere il mio schermo?'},{t:'Let\'s take a five-minute break.',tr:'Facciamo una pausa di cinque minuti.'}] },
+    ],
+    Mastery: [
+      { title:'Idioms & Expressions',       phrases:[{t:'It\'s raining cats and dogs.',tr:'Piove a dirotto.'},{t:'Break a leg!',tr:'In bocca al lupo!'}] },
+      { title:'Phrasal Verbs – Advanced',   phrases:[{t:'I\'ll look into this issue.',tr:'Mi occuperò di questa questione.'},{t:'Can you fill me in?',tr:'Puoi aggiornarmi?'}] },
+      { title:'Sarcasm & Humor',            phrases:[{t:'Oh, sure, that\'s totally fine. (ironic)',tr:'Certo, ma figurati. (ironico)'},{t:'As if!',tr:'Ma figurati!'}] },
+      { title:'Discussing Abstract Ideas',  phrases:[{t:'The concept of freedom is complex.',tr:'Il concetto di libertà è complesso.'},{t:'Let\'s think outside the box.',tr:'Pensiamo fuori dagli schemi.'}] },
+      { title:'Debating & Arguing',         phrases:[{t:'That\'s a valid point, however…',tr:'È un punto valido, tuttavia…'},{t:'I beg to differ.',tr:'Mi permetta di dissentire.'}] },
+      { title:'Literature & Culture',       phrases:[{t:'The novel explores human nature.',tr:'Il romanzo esplora la natura umana.'},{t:'It\'s a masterpiece of its time.',tr:'È un capolavoro del suo tempo.'}] },
+      { title:'Formal Writing Styles',      phrases:[{t:'I would like to respectfully point out…',tr:'Mi permetto di far notare rispettosamente…'},{t:'Furthermore, it should be noted…',tr:'Inoltre, si dovrebbe notare…'}] },
+      { title:'Technical Vocabulary',       phrases:[{t:'Please run a diagnostic check.',tr:'Si prega di eseguire una diagnostica.'},{t:'The algorithm needs optimizing.',tr:'L\'algoritmo va ottimizzato.'}] },
+      { title:'Storytelling Techniques',    phrases:[{t:'Once upon a time…',tr:'C\'era una volta…'},{t:'The plot thickens!',tr:'La trama si infittisce!'}] },
+      { title:'Near-Native Conversation',   phrases:[{t:'That\'s the gist of it.',tr:'Questo è il succo del discorso.'},{t:'To cut a long story short…',tr:'Per farla breve…'}] },
+    ],
+  },
+};
+
+// Clone EN lessons schema for IT/ES/FR (translated titles for demo)
+const LESSONS_IT_TITLES = [
+  ['Saluti e presentazioni','Numeri 1–20','Giorni e mesi','Colori e forme','La famiglia','Cibo e bevande – Basi','Verbi comuni – Presente','Fare domande semplici','Aggettivi descrittivi','Dire l\'ora'],
+  ['All\'aeroporto','Prenotare un hotel','Trasporto pubblico','Indicazioni stradali','Al ristorante','Fare shopping','Emergenze all\'estero','Valuta e pagamenti','Visite turistiche','Dogana e passaporto'],
+  ['Conversazione casuale','Fare complimenti','Inviti','Parlare di hobby','Esprimere opinioni','Scuse e scusanti','Dare consigli','Parlare di piani','Film e musica','Frasi sui social media'],
+  ['Presentazioni al lavoro','Riunioni e ordine del giorno','Email e corrispondenza','Negoziazioni','Presentazioni aziendali','Parlare dei dati','Problem solving al lavoro','Networking','HR e colloqui','Frasi per il lavoro da remoto'],
+  ['Espressioni idiomatiche','Verbi frasali avanzati','Sarcasmo e umorismo','Idee astratte','Dibattito e argomentazione','Letteratura e cultura','Stile formale di scrittura','Vocabolario tecnico','Tecniche narrative','Conversazione quasi madrelingua'],
+];
+const LESSONS_ES_TITLES = [
+  ['Saludos y presentaciones','Números 1–20','Días y meses','Colores y formas','La familia','Comida y bebidas – Básico','Verbos comunes – Presente','Hacer preguntas simples','Adjetivos descriptivos','Decir la hora'],
+  ['En el aeropuerto','Reservar un hotel','Transporte público','Indicaciones','En el restaurante','De compras','Emergencias en el extranjero','Moneda y pagos','Turismo','Aduana y pasaporte'],
+  ['Conversación casual','Hacer cumplidos','Invitaciones','Hablar de aficiones','Expresar opiniones','Disculpas','Dar consejos','Hablar de planes','Películas y música','Frases de redes sociales'],
+  ['Presentaciones en el trabajo','Reuniones y agendas','Correos y correspondencia','Negociaciones','Presentaciones empresariales','Hablar de datos','Resolución de problemas','Networking','RRHH y entrevistas','Frases para teletrabajo'],
+  ['Modismos y expresiones','Phrasal verbs avanzados','Sarcasmo y humor','Ideas abstractas','Debate y argumentación','Literatura y cultura','Escritura formal','Vocabulario técnico','Técnicas narrativas','Conversación casi nativa'],
+];
+const LESSONS_FR_TITLES = [
+  ['Salutations et présentations','Nombres 1–20','Jours et mois','Couleurs et formes','La famille','Nourriture et boissons – Bases','Verbes courants – Présent','Poser des questions simples','Adjectifs descriptifs','Dire l\'heure'],
+  ['À l\'aéroport','Réserver un hôtel','Transport en commun','Directions','Au restaurant','Faire des achats','Urgences à l\'étranger','Monnaie et paiements','Visites touristiques','Douane et passeport'],
+  ['Conversation informelle','Faire des compliments','Invitations','Parler de hobbies','Exprimer des opinions','Excuses','Donner des conseils','Parler de projets','Films et musique','Phrases sur les réseaux sociaux'],
+  ['Présentations au travail','Réunions et ordres du jour','E-mails et correspondance','Négociations','Présentations professionnelles','Parler des données','Résolution de problèmes','Réseautage','RH et entretiens','Télétravail'],
+  ['Expressions idiomatiques','Verbes à particule avancés','Sarcasme et humour','Idées abstraites','Débat et argumentation','Littérature et culture','Écriture formelle','Vocabulaire technique','Techniques narratives','Conversation quasi-native'],
+];
+
+function getLessonsByLang(lang) {
+  const lessons = { EN: LESSONS_DATA.EN };
+  const makeLessons = (titles) => {
+    const res = {};
+    MODULES.forEach((m, mi) => {
+      res[m] = titles[mi].map((title, li) => ({
+        title,
+        phrases: LESSONS_DATA.EN[m]?.[li]?.phrases?.map(p => ({ t: p.tr, tr: p.t })) || [{ t: title, tr: '—' }]
+      }));
+    });
+    return res;
+  };
+  lessons.IT = makeLessons(LESSONS_IT_TITLES);
+  lessons.ES = makeLessons(LESSONS_ES_TITLES);
+  lessons.FR = makeLessons(LESSONS_FR_TITLES);
+  return lessons[lang] || lessons.EN;
+}
+
+// Progress simulation (random saved state)
+const PROGRESS_KEY = 'mtalk_progress';
+let userProgress = {};
+try { userProgress = JSON.parse(localStorage.getItem(PROGRESS_KEY)) || {}; } catch(e) { userProgress = {}; }
+function getProgress(lang, module, idx) {
+  const k = `${lang}_${module}_${idx}`;
+  if (!(k in userProgress)) {
+    // Simulate some existing progress for demo
+    userProgress[k] = idx < 3 ? 100 : idx < 5 ? Math.floor(Math.random()*80) : 0;
+    try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(userProgress)); } catch(e){}
+  }
+  return userProgress[k];
+}
+
+// ──────────────────────────────────────────────────────────────
+// ACADEMY RENDERING
+// ──────────────────────────────────────────────────────────────
+let currentAcademyLang = 'IT';
+
+function selectAcademyLang(lang, btn) {
+  currentAcademyLang = lang;
+  document.querySelectorAll('.lang-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAcademy(lang);
+}
+
+function renderAcademy(lang) {
+  const scroll = document.getElementById('modules-scroll');
+  scroll.innerHTML = '';
+  const lessonsMap = getLessonsByLang(lang);
+  const color = LANG_COLORS[lang];
+
+  MODULES.forEach((module, mi) => {
+    const section = document.createElement('div');
+    section.className = 'module-section';
+    section.innerHTML = `<div class="module-title">${MODULE_ICONS[mi]} Modulo ${mi+1} — ${module}</div>`;
+
+    const lessons = lessonsMap[module] || [];
+    lessons.forEach((lesson, li) => {
+      const pct = getProgress(lang, module, li);
+      const status = pct >= 100 ? 'done' : pct > 0 ? 'unlocked' : li <= 3 ? 'unlocked' : 'locked';
+      const numLabel = pct >= 100 ? '✓' : `${mi * 10 + li + 1}`;
+      const card = document.createElement('div');
+      card.className = 'lesson-card';
+      card.innerHTML = `
+        <div class="lesson-num ${status}">${numLabel}</div>
+        <div class="lesson-info">
+          <div class="lesson-title">${lesson.title}</div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width:${pct}%;background:${color.bar}"></div>
+          </div>
+        </div>
+        <div class="lesson-pct">${pct}%</div>
+      `;
+      card.onclick = () => openLesson(lesson, lang, module, li, color);
+      section.appendChild(card);
+    });
+    scroll.appendChild(section);
+  });
+}
+
+function openLesson(lesson, lang, module, idx, color) {
+  const modal = document.getElementById('lesson-modal');
+  document.getElementById('modal-module-label').textContent = `${lang} — ${module}`;
+  document.getElementById('modal-lesson-title').textContent = lesson.title;
+  const body = document.getElementById('modal-body');
+  body.innerHTML = '';
+
+  lesson.phrases.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'phrase-card glass-card';
+    card.innerHTML = `
+      <div class="phrase-target" style="color:${color.fill}">${p.t}</div>
+      <div class="phrase-translation">${p.tr}</div>
+      <button class="phrase-listen-btn" onclick="speak('${p.t.replace(/'/g,"\\'")}','${lang.toLowerCase()}')">🔊 Ascolta</button>
+    `;
+    body.appendChild(card);
+  });
+
+  modal.classList.add('open');
+
+  // Mark progress
+  const k = `${lang}_${module}_${idx}`;
+  if ((userProgress[k] || 0) < 100) {
+    userProgress[k] = Math.min(100, (userProgress[k] || 0) + 33);
+    try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(userProgress)); } catch(e){}
+  }
+}
+
+function closeModal() {
+  document.getElementById('lesson-modal').classList.remove('open');
+  renderAcademy(currentAcademyLang);
+}
+
+// ──────────────────────────────────────────────────────────────
+// AI COACH DATA & LOGIC
+// ──────────────────────────────────────────────────────────────
+const SCENARIOS = [
+  {
+    name: 'Aeroporto', emoji: '✈️',
+    systemPrompt: 'You are an airport staff assistant. Respond in the user\'s chosen language. Keep answers short (1-3 sentences). If the user makes a grammar mistake, add a correction at the end in parentheses like: (💡 Correction: correct form)',
+    openingMsg: { en:'Hello! Welcome to the airport. How can I help you today?', it:'Benvenuto/a in aeroporto! Come posso aiutarla?', es:'¡Bienvenido al aeropuerto! ¿En qué puedo ayudarle?', fr:'Bienvenue à l\'aéroport! Comment puis-je vous aider?' }
+  },
+  {
+    name: 'Ristorante', emoji: '🍽️',
+    systemPrompt: 'You are a friendly restaurant waiter. Respond in the user\'s chosen language. Keep answers short and natural. Add grammar corrections in parentheses if needed.',
+    openingMsg: { en:'Good evening! Welcome to our restaurant. Do you have a reservation?', it:'Buonasera! Benvenuto nel nostro ristorante. Ha una prenotazione?', es:'¡Buenas noches! Bienvenido a nuestro restaurante. ¿Tiene reserva?', fr:'Bonsoir! Bienvenue dans notre restaurant. Avez-vous une réservation?' }
+  },
+  {
+    name: 'Hotel', emoji: '🏨',
+    systemPrompt: 'You are a hotel receptionist. Respond in the user\'s chosen language briefly. Add grammar corrections in parentheses if needed.',
+    openingMsg: { en:'Good morning! Welcome to the Grand Hotel. How can I assist you?', it:'Buongiorno! Benvenuto al Grand Hotel. Come posso assisterla?', es:'¡Buenos días! Bienvenido al Grand Hotel. ¿En qué puedo ayudarle?', fr:'Bonjour! Bienvenue au Grand Hôtel. Comment puis-je vous aider?' }
+  },
+  {
+    name: 'Shopping', emoji: '🛒',
+    systemPrompt: 'You are a shop assistant. Respond in the user\'s chosen language. Keep it natural and short. Add grammar corrections if needed.',
+    openingMsg: { en:'Hi there! Let me know if you need help finding anything.', it:'Salve! Mi dica se ha bisogno di aiuto.', es:'¡Hola! Avísame si necesitas ayuda.', fr:'Bonjour! Dites-moi si vous avez besoin d\'aide.' }
+  },
+  {
+    name: 'Business', emoji: '💼',
+    systemPrompt: 'You are a professional business contact. Respond formally in the user\'s chosen language. Add grammar corrections in parentheses if needed.',
+    openingMsg: { en:'Good morning. Thank you for meeting with me today. Shall we get started?', it:'Buongiorno. Grazie per aver accettato questo incontro. Iniziamo?', es:'Buenos días. Gracias por reunirse conmigo. ¿Empezamos?', fr:'Bonjour. Merci pour cette réunion. Commençons?' }
+  },
+  {
+    name: 'Trasporti', emoji: '🚌',
+    systemPrompt: 'You are a transport information agent. Respond in the user\'s chosen language briefly. Add grammar corrections if needed.',
+    openingMsg: { en:'Hello! How can I help you with transport today?', it:'Salve! Come posso aiutarla con i trasporti?', es:'¡Hola! ¿En qué puedo ayudarle con el transporte?', fr:'Bonjour! Comment puis-je vous aider avec les transports?' }
+  },
+];
+
+let currentScenario = 0;
+let chatMessages = [];
+let coachRecognition = null;
+let coachRecording = false;
+
+function selectScenario(idx, btn) {
+  currentScenario = idx;
+  document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  chatMessages = [];
+  document.getElementById('chat-messages').innerHTML = '';
+  initCoachChat();
+}
+
+function initCoachChat() {
+  const s = SCENARIOS[currentScenario];
+  const lang = document.getElementById('coach-lang').value;
+  document.getElementById('coach-scenario-label').textContent = `${s.emoji} ${s.name}`;
+  document.getElementById('coach-title-el').textContent = 'AI Coach — ' + s.name;
+  const opening = s.openingMsg[lang] || s.openingMsg.en;
+  addChatMsg('ai', opening);
+  speak(opening, lang);
+}
+
+function addChatMsg(role, text, correction) {
+  const container = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  if (role === 'ai') div.innerHTML = `<div class="speaker">🤖 AI Coach</div>`;
+  else div.innerHTML = `<div class="speaker">👤 Tu</div>`;
+  const p = document.createElement('p');
+  p.textContent = text;
+  div.appendChild(p);
+  if (correction) {
+    const c = document.createElement('div');
+    c.className = 'correction';
+    c.textContent = correction;
+    div.appendChild(c);
+  }
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+  chatMessages.push({ role: role === 'ai' ? 'assistant' : 'user', content: text });
+}
+
+function showTyping() {
+  const container = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'typing-indicator';
+  div.id = 'typing-indicator';
+  div.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+function hideTyping() {
+  const el = document.getElementById('typing-indicator');
+  if (el) el.remove();
+}
+
+async function getAIResponse(userText) {
+  const lang = document.getElementById('coach-lang').value;
+  const langName = LANG_CONFIG[lang]?.name || 'English';
+  const s = SCENARIOS[currentScenario];
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 🔑 OPENAI API — La risposta reale viene da qui
+  // Decommentare e inserire la chiave per usare GPT-4o
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  if (OPENAI_API_KEY) {
+    try {
+      const messages = [
+        { role: 'system', content: `${s.systemPrompt} The user is learning ${langName}. Respond in ${langName}. If you detect grammar errors, add them as a parenthetical note at the very end.` },
+        ...chatMessages.slice(-6), // Last 6 messages for context
+        { role: 'user', content: userText }
+      ];
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${OPENAI_API_KEY}`
+        },
+        body: JSON.stringify({ model: 'gpt-4o-mini', messages, max_tokens: 200, temperature: 0.8 })
+      });
+      const data = await res.json();
+      return data.choices?.[0]?.message?.content || fallbackAIResponse(userText, lang, s.name);
+    } catch(e) { console.warn('OpenAI error', e); }
+  }
+
+  // ── Fallback: risposta locale simulata ──
+  return fallbackAIResponse(userText, lang, s.name);
+}
+
+// Simulated AI responses per scenario + grammar correction detection
+const AI_RESPONSES = {
+  Aeroporto: {
+    en: ['Your flight to Rome departs from Gate B12 at 14:30. Don\'t forget to pass through security first!','I\'d be happy to help. Your boarding pass should be displayed in the airline\'s app.','The nearest lounge is on the second floor, past the duty-free shops.','Baggage claim is on the ground floor, Hall C. Your bags should arrive in about 20 minutes.'],
+    it: ['Il suo volo per Roma parte dal Gate B12 alle 14:30. Ricordi di passare per il controllo di sicurezza!','Con piacere. Il suo biglietto d\'imbarco dovrebbe essere nell\'app della compagnia aerea.','La lounge più vicina è al secondo piano, dopo i negozi duty-free.'],
+    es: ['Su vuelo a Roma sale de la puerta B12 a las 14:30. ¡No olvide pasar por seguridad!','Con mucho gusto. Su tarjeta de embarque debería estar en la aplicación de la aerolínea.'],
+    fr: ['Votre vol pour Rome part de la porte B12 à 14h30. N\'oubliez pas de passer le contrôle de sécurité!','Avec plaisir. Votre carte d\'embarquement devrait être dans l\'application de la compagnie.'],
+  },
+  Ristorante: {
+    en: ['Of course! Our chef recommends the grilled sea bass with lemon butter sauce. Shall I tell you more about our specials?','Excellent choice! Would you like still or sparkling water to start?','I\'ll bring the bill right away. Would you like a receipt?'],
+    it: ['Certo! Il nostro chef raccomanda il branzino alla griglia con salsa al burro e limone. Vuole sapere di più sui piatti del giorno?','Ottima scelta! Vuole acqua naturale o frizzante per iniziare?'],
+    es: ['¡Por supuesto! Nuestro chef recomienda la lubina a la plancha con mantequilla y limón. ¿Le cuento más sobre los especiales del día?'],
+    fr: ['Bien sûr! Notre chef recommande le bar grillé au beurre citronné. Souhaitez-vous en savoir plus sur nos plats du jour?'],
+  },
+};
+
+function fallbackAIResponse(userText, lang, scenarioName) {
+  const name = Object.keys(AI_RESPONSES).find(k => scenarioName.includes(k)) || 'Aeroporto';
+  const pool = AI_RESPONSES[name]?.[lang] || AI_RESPONSES[name]?.en || ['I understand. How can I help you further?'];
+  const response = pool[Math.floor(Math.random() * pool.length)];
+
+  // Simple grammar correction detection (demo)
+  let correction = null;
+  const lower = userText.toLowerCase();
+  if (lang === 'en') {
+    if (/\bi has\b/.test(lower)) correction = '💡 Correction: "I have" (not "I has")';
+    else if (/\bhe don't\b/.test(lower)) correction = '💡 Correction: "he doesn\'t" (not "he don\'t")';
+    else if (/\byesterday i go\b/.test(lower)) correction = '💡 Correction: "yesterday I went" (past tense)';
+  } else if (lang === 'it') {
+    if (/\bio sono andato a\b.*\bun\b/.test(lower)) correction = '💡 Correzione: controlla la preposizione (es. "sono andato al…")';
+  }
+  return response + (correction ? `\n\n${correction}` : '');
+}
+
+function parseAIResponse(raw) {
+  // Split correction note from main response
+  const corrRegex = /\(💡[^)]+\)/;
+  const match = raw.match(corrRegex);
+  if (match) {
+    return {
+      text: raw.replace(corrRegex, '').trim(),
+      correction: match[0]
+    };
+  }
+  // Also detect parenthetical corrections at end
+  const lines = raw.trim().split('\n');
+  const lastLine = lines[lines.length - 1];
+  if (lastLine.startsWith('(💡') || lastLine.startsWith('(Correction') || lastLine.startsWith('(Correzione')) {
+    return { text: lines.slice(0,-1).join('\n').trim(), correction: lastLine };
+  }
+  return { text: raw, correction: null };
+}
+
+async function handleCoachInput(userText) {
+  if (!userText.trim()) return;
+  const lang = document.getElementById('coach-lang').value;
+  addChatMsg('user', userText);
+  showTyping();
+  document.getElementById('coach-status-title').textContent = 'AI sta scrivendo…';
+
+  await new Promise(r => setTimeout(r, 1200)); // Simulate latency
+  const rawResponse = await getAIResponse(userText);
+  hideTyping();
+  const { text, correction } = parseAIResponse(rawResponse);
+  addChatMsg('ai', text, correction);
+  speak(text, lang);
+  document.getElementById('coach-status-title').textContent = 'Pronto';
+  document.getElementById('coach-status-sub').textContent = 'Tocca il mic per parlare';
+}
+
+// ──────────────────────────────────────────────────────────────
+// AI COACH STT
+// ──────────────────────────────────────────────────────────────
+function toggleCoachMic() {
+  if (coachRecording) { stopCoachMic(); return; }
+  startCoachMic();
+}
+
+function startCoachMic() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) { showToast('⚠️ Speech recognition non disponibile su questo browser'); return; }
+
+  const lang = document.getElementById('coach-lang').value;
+  const lc = LANG_CONFIG[lang];
+  coachRecognition = new SpeechRecognition();
+  coachRecognition.lang = lc.bcp;
+  coachRecognition.interimResults = true;
+  coachRecognition.continuous = false;
+  coachRecording = true;
+
+  const btn = document.getElementById('coach-voice-btn');
+  btn.classList.add('recording');
+  document.getElementById('coach-status-title').textContent = '🎙️ Registrazione…';
+  document.getElementById('coach-status-sub').textContent = 'Parla ora';
+
+  let finalText = '';
+
+  coachRecognition.onresult = (e) => {
+    const last = e.results[e.results.length - 1];
+    const text = last[0].transcript;
+    document.getElementById('coach-status-sub').textContent = text;
+    if (last.isFinal) { finalText = text; }
+  };
+  coachRecognition.onerror = (e) => {
+    showToast('❌ ' + e.error); stopCoachMic();
+  };
+  coachRecognition.onend = async () => {
+    stopCoachMic();
+    if (finalText) await handleCoachInput(finalText);
+    else { document.getElementById('coach-status-sub').textContent = 'Tocca il mic per parlare'; }
+  };
+  coachRecognition.start();
+}
+
+function stopCoachMic() {
+  if (coachRecognition) { try { coachRecognition.stop(); } catch(e){} coachRecognition = null; }
+  coachRecording = false;
+  document.getElementById('coach-voice-btn').classList.remove('recording');
+  document.getElementById('coach-status-title').textContent = 'Pronto';
+}
+
+// ──────────────────────────────────────────────────────────────
+// INIT
+// ──────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  // Voices may load async on iOS
+  if (window.speechSynthesis) {
+    window.speechSynthesis.onvoiceschanged = () => {};
+    window.speechSynthesis.getVoices();
+  }
+
+  // Set initial button labels
+  onLangChange('a');
+  onLangChange('b');
+
+  // Render academy with default lang
+  renderAcademy('IT');
+});
+</script>
+</body>
+</html>
