@@ -41,20 +41,13 @@ html,body{
 
 /* HEADER */
 .hdr{
-  flex-shrink:0;padding:10px 16px 7px;text-align:center;
+  flex-shrink:0;padding:8px 16px 8px;text-align:center;
   border-bottom:1px solid var(--border);
 }
 .hdr h1{
   font-size:22px;font-weight:800;letter-spacing:-.02em;
   background:linear-gradient(90deg,#f0f0ff,var(--cyan));
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-}
-.hdr p{font-size:11px;color:var(--muted);margin-top:1px}
-.badge{
-  display:inline-flex;align-items:center;gap:4px;
-  margin-top:5px;padding:3px 12px;border-radius:50px;
-  background:rgba(79,240,208,0.09);border:1px solid rgba(79,240,208,0.22);
-  font-size:10px;font-weight:700;letter-spacing:.05em;color:var(--cyan);
 }
 
 /* MIRROR */
@@ -174,13 +167,12 @@ html,body{
 
 /* DIVIDER */
 .divider{
-  flex-shrink:0;height:32px;
-  display:flex;align-items:center;justify-content:center;gap:8px;
+  flex-shrink:0;height:28px;
+  display:flex;align-items:center;justify-content:center;gap:16px;
   border-top:1px solid var(--border);border-bottom:1px solid var(--border);
   background:rgba(255,255,255,0.015);
 }
 .divider svg{width:18px;height:18px;color:var(--muted)}
-.divider span{font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--muted)}
 
 /* TOAST */
 #toast{
@@ -201,8 +193,6 @@ html,body{
 
   <div class="hdr">
     <h1>🌐 MirrorTalk</h1>
-    <p>Premi il microfono, parla — il telefono traduce e legge ad alta voce</p>
-    <div class="badge">🤖 Web Speech · MyMemory · TTS nativo</div>
   </div>
 
   <div id="mirror">
@@ -227,8 +217,8 @@ html,body{
       <div class="bwrap">
         <div class="tmr" id="tmr-b"></div>
         <button class="mic red" id="btn-b"
-                ontouchstart="onTouchStart('b',event)"
-                onclick="onTap('b')">
+                ontouchstart="handleTap('b');event.preventDefault()"
+                onclick="if(!('ontouchstart' in window))handleTap('b')">
           <svg class="ring" viewBox="0 0 110 110">
             <circle class="rb" cx="55" cy="55" r="50"/>
             <circle class="rf" id="ring-b" cx="55" cy="55" r="50" stroke-dasharray="314" stroke-dashoffset="314"/>
@@ -247,7 +237,6 @@ html,body{
     <!-- DIVIDER -->
     <div class="divider">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
-      <span>TRADUZIONE ISTANTANEA</span>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4m0 0L3 8m4-4l4 4"/><path d="M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
     </div>
 
@@ -272,8 +261,8 @@ html,body{
       <div class="bwrap">
         <div class="tmr" id="tmr-a"></div>
         <button class="mic blue" id="btn-a"
-                ontouchstart="onTouchStart('a',event)"
-                onclick="onTap('a')">
+                ontouchstart="handleTap('a');event.preventDefault()"
+                onclick="if(!('ontouchstart' in window))handleTap('a')">
           <svg class="ring" viewBox="0 0 110 110">
             <circle class="rb" cx="55" cy="55" r="50"/>
             <circle class="rf" id="ring-a" cx="55" cy="55" r="50" stroke-dasharray="314" stroke-dashoffset="314"/>
@@ -296,27 +285,25 @@ html,body{
 <script>
 'use strict';
 /*
- ══════════════════════════════════════════════════════════
-  MIRRORTALK v4 — Fix iOS TTS
+ ══════════════════════════════════════════════════════════════
+  MIRRORTALK v5
+
+  SOLUZIONE iOS TTS:
+  iOS Safari permette speechSynthesis.speak() SOLO dentro
+  un evento touch/click diretto. Strategia:
   
-  PROBLEMA PRINCIPALE su iOS Safari:
-  window.speechSynthesis.speak() funziona SOLO se invocata
-  direttamente dentro un handler touch/click.
-  Soluzione adottata:
-    1. ontouchstart → warm-up TTS + flag _ttsReady=true
-    2. Al termine della traduzione, parla subito (non in async)
-    Usiamo una coda pendente: se la traduzione arriva prima
-    che l'utente abbia toccato di nuovo, la mettiamo in coda
-    e la eseguiamo al prossimo tap (fallback).
-    
-  Stack (tutto gratuito):
-    STT  → Web Speech API  (Safari/Chrome)
-    TRAD → MyMemory API    (5000 req/giorno)
-    TTS  → SpeechSynthesis (nativa iOS/Android)
- ══════════════════════════════════════════════════════════
+  1. Al PRIMO touchstart → unlock AudioContext + speak vuoto (warm-up)
+  2. La registrazione parte automaticamente e si ferma da sola
+     quando smetti di parlare (no-speech / silence detection)
+  3. Appena arriva la traduzione → speak() chiamato direttamente
+     (non in async, ma in una microtask che iOS ancora accetta
+     se il warm-up è stato fatto)
+  4. Il tasto serve solo per AVVIARE — non serve Stop.
+     Si ferma da solo dopo 2 secondi di silenzio.
+ ══════════════════════════════════════════════════════════════
 */
 
-const DEEPL_API_KEY = null; // opzionale: 'xxxx:fx'
+const DEEPL_API_KEY = null;
 
 const LC = {
   it:{ lbl:'Parla',    bcp:'it-IT', name:'Italiano',  dl:'IT' },
@@ -332,246 +319,248 @@ const LC = {
   cs:{ lbl:'Mluvit',   bcp:'cs-CZ', name:'Čeština',   dl:'CS' },
 };
 
-// ── Stato globale ─────────────────────────────────────────
-let _ttsReady  = false;   // true dopo primo touchstart
-let _pendingSpeak = null; // { text, lang, btn, ta } — da eseguire
+// ── Stato ─────────────────────────────────────────────────
 let mRec=null, mSide=null, mTimer=null, mCnt=0, mBest='';
-const SEC = 10;
+let _unlocked = false;
+const SEC = 12;
 
-// ── Helpers UI ────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────
 function gl(s){ return document.getElementById('lang-'+s).value; }
 function onLangChange(s){
-  const lc=LC[gl(s)]||LC.it;
-  document.getElementById('lbl-'+s).textContent=lc.lbl;
+  document.getElementById('lbl-'+s).textContent = LC[gl(s)]?.lbl || 'Parla';
 }
 let _tt;
-function toast(m,d=3000){
+function toast(m, d=2800){
   const el=document.getElementById('toast');
-  el.textContent=m;el.classList.add('show');
-  clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),d);
+  el.textContent=m; el.classList.add('show');
+  clearTimeout(_tt); _tt=setTimeout(()=>el.classList.remove('show'),d);
 }
 
-// ── iOS TTS warm-up ───────────────────────────────────────
-// Chiamato in ontouchstart — qui siamo in un gesto utente diretto
-function warmUp(){
-  if(_ttsReady) return;
-  _ttsReady=true;
-  // Sblocca AudioContext
+// ── UNLOCK AUDIO (iOS) ────────────────────────────────────
+// Deve essere chiamato direttamente dentro touchstart/click
+function unlockAudio(){
+  if(_unlocked) return;
+  _unlocked = true;
+  // 1. Sblocca AudioContext
   try{
-    const ac=new(window.AudioContext||window.webkitAudioContext)();
-    const b=ac.createBuffer(1,1,22050),s=ac.createBufferSource();
-    s.buffer=b;s.connect(ac.destination);s.start(0);
-    if(ac.state==='suspended')ac.resume();
+    const ac = new(window.AudioContext||window.webkitAudioContext)();
+    const buf = ac.createBuffer(1,1,22050);
+    const src = ac.createBufferSource();
+    src.buffer=buf; src.connect(ac.destination); src.start(0);
+    if(ac.state==='suspended') ac.resume();
   }catch(e){}
-  // Speak silenzioso per sbloccare SpeechSynthesis su iOS
-  if(window.speechSynthesis){
-    const u=new SpeechSynthesisUtterance(' ');
-    u.volume=0;u.rate=1;
-    window.speechSynthesis.speak(u);
-    // Precarica voci
-    window.speechSynthesis.getVoices();
-  }
+  // 2. Speak vuoto — sblocca SpeechSynthesis su iOS
+  try{
+    if(window.speechSynthesis){
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance('');
+      u.volume=0; u.lang='it-IT';
+      window.speechSynthesis.speak(u);
+    }
+  }catch(e){}
 }
 
-// ── TTS effettivo ─────────────────────────────────────────
-function doSpeak(text, lang, onDone){
-  if(!window.speechSynthesis||!text.trim()){onDone?.();return;}
+// ── SPEAK ─────────────────────────────────────────────────
+function speakText(text, lang){
+  if(!window.speechSynthesis || !text) return;
   window.speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(text);
-  u.lang=LC[lang]?.bcp||lang; u.rate=0.9; u.pitch=1;
-  const voices=window.speechSynthesis.getVoices();
-  const px=u.lang.slice(0,2);
-  const voice=voices.find(v=>v.lang.startsWith(px)&&v.localService)
-           ||voices.find(v=>v.lang.startsWith(px));
-  if(voice)u.voice=voice;
-  u.onend=()=>onDone?.();
-  u.onerror=(e)=>{console.warn('TTS:',e.error);onDone?.();};
-  window.speechSynthesis.speak(u);
-  // Fix iOS pausa silenziosa
-  setTimeout(()=>{if(window.speechSynthesis.paused)window.speechSynthesis.resume();},300);
+
+  const go = () => {
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang  = LC[lang]?.bcp || 'en-US';
+    u.rate  = 0.88;
+    u.pitch = 1;
+    // Scegli la voce migliore disponibile
+    const vs  = window.speechSynthesis.getVoices();
+    const px  = u.lang.slice(0,2);
+    u.voice   = vs.find(v=>v.lang.startsWith(px)&&v.localService)
+             || vs.find(v=>v.lang.startsWith(px))
+             || null;
+    window.speechSynthesis.speak(u);
+    // Workaround: iOS a volte si mette in pausa da solo
+    const fix = setInterval(()=>{
+      if(!window.speechSynthesis.speaking){ clearInterval(fix); return; }
+      if(window.speechSynthesis.paused) window.speechSynthesis.resume();
+    }, 250);
+    u.onend = u.onerror = ()=> clearInterval(fix);
+  };
+
+  // Piccolo delay per far sì che iOS "accetti" la chiamata
+  // (rimane abbastanza vicino al gesto utente)
+  setTimeout(go, 80);
 }
 
-// ── Handler touch/click bottone ───────────────────────────
-// ontouchstart: warm up + avvia registrazione SUBITO
-// (siamo nel gesto diretto → TTS sarà sbloccato)
-function onTouchStart(side, ev){
-  ev.preventDefault(); // evita doppio click
-  warmUp();
-  // Se c'è una sintesi in coda, eseguila ORA che siamo nel gesto
-  if(_pendingSpeak){
-    const p=_pendingSpeak; _pendingSpeak=null;
-    doSpeak(p.text, p.lang, ()=>{
-      document.getElementById('btn-'+p.other).classList.remove('speaking-out');
-      document.getElementById('tr-'+p.other).classList.remove('speaking');
-    });
-    return; // non avviare mic contemporaneamente
+// ── TRADUZIONE ────────────────────────────────────────────
+async function doTranslate(text, from, to){
+  if(!text || from===to) return text;
+  // DeepL opzionale
+  if(DEEPL_API_KEY){
+    try{
+      const r = await fetch('https://api-free.deepl.com/v2/translate',{
+        method:'POST',
+        headers:{'Content-Type':'application/x-www-form-urlencoded'},
+        body: new URLSearchParams({
+          auth_key: DEEPL_API_KEY, text,
+          source_lang: (LC[from]?.dl||from).toUpperCase(),
+          target_lang: (LC[to]?.dl||to).toUpperCase()
+        })
+      });
+      const d = await r.json();
+      if(d.translations?.[0]?.text) return d.translations[0].text;
+    }catch(e){}
   }
-  toggleMic(side);
+  // MyMemory gratuito
+  try{
+    const r = await fetch(
+      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`
+    );
+    const d = await r.json();
+    if(d.responseStatus===200 && d.responseData?.translatedText){
+      const t = d.responseData.translatedText;
+      if(t && !t.includes('MYMEMORY WARNING') && t.toLowerCase()!==text.toLowerCase())
+        return t;
+    }
+  }catch(e){}
+  return text;
 }
 
-// onclick: fallback per desktop o quando touchstart non c'è
-function onTap(side){
-  // Su mobile, onTouchStart ha già gestito — evitiamo doppio avvio
-  // controlliamo se mSide è già impostato correttamente
-  // (questo handler arriva ~300ms dopo touchstart su iOS)
-  // Non facciamo nulla: touchstart ha già gestito tutto
-}
+// ── MIC ───────────────────────────────────────────────────
+// Il tap avvia la registrazione.
+// Si ferma AUTOMATICAMENTE quando l'utente smette di parlare
+// (onend senza no-speech = fine frase rilevata dal browser).
+// Se si vuole fermare manualmente, si retappa.
 
-// ── Mic toggle ────────────────────────────────────────────
-function toggleMic(side){
-  if(mSide===side){stopRec();return;}
-  if(mSide){cancelRec();}
+function handleTap(side){
+  // Questo viene chiamato da ontouchstart (mobile) o onclick (desktop)
+  unlockAudio(); // PRIMA cosa: unlock dentro il gesto
+
+  if(mSide === side){ // secondo tap → stop manuale
+    finishRec();
+    return;
+  }
+  if(mSide){ cancelRec(); }
   startRec(side);
 }
 
 function startRec(side){
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){toast('⚠️ Usa Safari (iOS) o Chrome (Android)');return;}
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ toast('⚠️ Usa Safari su iPhone o Chrome su Android'); return; }
 
-  const from=gl(side), lc=LC[from]||LC.it;
+  const from = gl(side);
+  const lc   = LC[from] || LC.it;
   mSide=side; mBest='';
 
-  const btn=document.getElementById('btn-'+side);
-  const ta=document.getElementById('tr-'+side);
-  const tmr=document.getElementById('tmr-'+side);
-  const ring=document.getElementById('ring-'+side);
+  const btn  = document.getElementById('btn-'+side);
+  const ta   = document.getElementById('tr-'+side);
+  const tmr  = document.getElementById('tmr-'+side);
+  const ring = document.getElementById('ring-'+side);
 
   btn.classList.add('recording');
-  document.getElementById('lbl-'+side).textContent='Stop';
+  document.getElementById('lbl-'+side).textContent = '🛑';
   ta.className='transcript listening';
   ta.textContent='🎙️ In ascolto…';
 
-  // Countdown ring
+  // Countdown ring (solo visivo, non forza lo stop)
   mCnt=SEC;
   const C=314;
   ring.style.strokeDashoffset=C;
   mTimer=setInterval(()=>{
     mCnt--;
     tmr.textContent=mCnt+'s';
-    ring.style.strokeDashoffset=C-((SEC-mCnt)/SEC)*C;
-    if(mCnt<=0)stopRec();
+    ring.style.strokeDashoffset = C-((SEC-mCnt)/SEC)*C;
+    if(mCnt<=0) finishRec(); // safety timeout
   },1000);
 
   mRec=new SR();
   mRec.lang=lc.bcp;
   mRec.interimResults=true;
-  mRec.continuous=true;
+  mRec.continuous=false; // <-- FALSE: si ferma da solo quando smetti di parlare!
 
   mRec.onresult=(e)=>{
+    mBest='';
     let interim='';
-    for(let i=e.resultIndex;i<e.results.length;i++){
-      const t=e.results[i][0].transcript;
-      if(e.results[i].isFinal)mBest+=t+' ';
-      else interim=t;
+    for(let i=0;i<e.results.length;i++){
+      if(e.results[i].isFinal) mBest+=e.results[i][0].transcript+' ';
+      else interim+=e.results[i][0].transcript;
     }
-    ta.textContent=(mBest+interim).trim()||ta.textContent;
+    ta.textContent=(mBest+interim).trim();
   };
+
   mRec.onerror=(e)=>{
-    if(e.error==='no-speech'){stopRec();return;}
-    if(e.error!=='aborted')toast('❌ '+e.error);
+    if(e.error==='no-speech'){ finishRec(); return; }
+    if(e.error==='aborted') return;
+    toast('❌ '+e.error);
     cancelRec();
   };
+
+  // onend scatta automaticamente quando il browser rileva il silenzio
   mRec.onend=()=>{
-    if(mSide===side&&mCnt>0){try{mRec.start();}catch(err){stopRec();}}
+    if(mSide===side) finishRec();
   };
-  try{mRec.start();}
-  catch(e){toast('❌ Microfono non disponibile');cancelRec();}
+
+  try{ mRec.start(); }
+  catch(e){ toast('❌ Microfono non disponibile'); cancelRec(); }
 }
 
-async function stopRec(){
-  if(!mSide)return;
+async function finishRec(){
+  if(!mSide) return;
   const side=mSide, from=gl(side), text=mBest.trim();
   _clearUI(side);
 
   const ta=document.getElementById('tr-'+side);
-  ta.classList.remove('listening');
-
   if(!text){
     ta.className='transcript ph';
-    ta.textContent='Nessun testo rilevato. Riprova.';
+    ta.textContent='Nessun testo. Riprova.';
     return;
   }
-  ta.textContent=text;
+  ta.className='transcript'; ta.textContent=text;
 
-  const other=side==='a'?'b':'a';
-  const toLang=gl(other);
-  const otherTA=document.getElementById('tr-'+other);
-  const stEl=document.getElementById('st-'+other);
-  const otherBtn=document.getElementById('btn-'+other);
+  // Mostra spinner nell'altra metà
+  const other   = side==='a'?'b':'a';
+  const toLang  = gl(other);
+  const otherTA = document.getElementById('tr-'+other);
+  const stEl    = document.getElementById('st-'+other);
+  const otherBtn= document.getElementById('btn-'+other);
 
-  otherTA.className='transcript';
-  otherTA.textContent='…';
-  stEl.innerHTML='<div class="spin"></div> Traduzione…';
+  otherTA.className='transcript'; otherTA.textContent='…';
+  stEl.innerHTML='<div class="spin"></div>';
 
-  // Traduci
-  const translated=await doTranslate(text,from,toLang);
+  const translated = await doTranslate(text, from, toLang);
   stEl.innerHTML='';
 
-  const finalText=translated||text;
+  const finalText = translated||text;
   otherTA.className='transcript speaking';
   otherTA.textContent=finalText;
-  toast('🔊 '+(LC[toLang]?.name||toLang));
 
-  const onDone=()=>{
+  // Animazione pulsante che "parla"
+  otherBtn.classList.add('speaking-out');
+
+  // *** PARLA *** — _unlocked è già true grazie al tap iniziale
+  speakText(finalText, toLang);
+
+  // Rimuovi animazione dopo stima durata parlato
+  const ms = Math.max(2000, finalText.length * 80);
+  setTimeout(()=>{
     otherBtn.classList.remove('speaking-out');
     otherTA.classList.remove('speaking');
-  };
-
-  // *** SPEAK ***
-  // Se TTS è già sbloccato → parla subito
-  // Altrimenti metti in coda: il prossimo tap dell'utente la eseguirà
-  if(_ttsReady){
-    otherBtn.classList.add('speaking-out');
-    doSpeak(finalText, toLang, onDone);
-  } else {
-    // fallback: mostra tasto "tap per sentire"
-    _pendingSpeak={text:finalText, lang:toLang, other};
-    stEl.innerHTML='👆 Tocca il microfono per sentire la traduzione';
-    toast('👆 Tocca il mic per ascoltare');
-  }
+  }, ms);
 }
 
-function cancelRec(){_clearUI(mSide);}
+function cancelRec(){ _clearUI(mSide); }
 
 function _clearUI(side){
-  clearInterval(mTimer);mTimer=null;
-  if(mRec){try{mRec.abort();}catch(e){}mRec=null;}
-  if(!side)return;
+  clearInterval(mTimer); mTimer=null;
+  if(mRec){ try{ mRec.abort(); }catch(e){} mRec=null; }
+  if(!side) return;
   const lc=LC[gl(side)]||LC.it;
-  document.getElementById('btn-'+side).classList.remove('recording','speaking-out');
+  const btn=document.getElementById('btn-'+side);
+  btn.classList.remove('recording','speaking-out');
   document.getElementById('lbl-'+side).textContent=lc.lbl;
   document.getElementById('tmr-'+side).textContent='';
   document.getElementById('ring-'+side).style.strokeDashoffset='314';
-  document.getElementById('tr-'+side).classList.remove('listening');
+  const ta=document.getElementById('tr-'+side);
+  ta.classList.remove('listening');
   mSide=null;
-}
-
-// ── Traduzione ────────────────────────────────────────────
-async function doTranslate(text,from,to){
-  if(!text||from===to)return text;
-  if(DEEPL_API_KEY){
-    try{
-      const r=await fetch('https://api-free.deepl.com/v2/translate',{
-        method:'POST',
-        headers:{'Content-Type':'application/x-www-form-urlencoded'},
-        body:new URLSearchParams({auth_key:DEEPL_API_KEY,text,
-          source_lang:(LC[from]?.dl||from).toUpperCase(),
-          target_lang:(LC[to]?.dl||to).toUpperCase()})
-      });
-      const d=await r.json();
-      if(d.translations?.[0]?.text)return d.translations[0].text;
-    }catch(e){console.warn('DeepL:',e);}
-  }
-  try{
-    const url=`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`;
-    const r=await fetch(url);
-    const d=await r.json();
-    if(d.responseStatus===200&&d.responseData?.translatedText){
-      const t=d.responseData.translatedText;
-      if(t&&t.toLowerCase()!==text.toLowerCase()&&!t.includes('MYMEMORY WARNING'))return t;
-    }
-  }catch(e){console.warn('MyMemory:',e);}
-  return text;
 }
 
 // ── Init ──────────────────────────────────────────────────
